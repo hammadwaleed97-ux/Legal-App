@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-# 1. إعدادات الهوية واللوجو المعتمد (ثابت في الأعلى)
+# 1. الهوية البصرية (اللوجو المعتمد)
 st.set_page_config(page_title="منظومة المستشار وليد حماد", layout="wide")
 
 st.markdown("""
@@ -14,74 +14,59 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# 2. تهيئة قاعدة البيانات الافتراضية
-if 'library_db' not in st.session_state:
-    st.session_state.library_db = []
-if 'cases_db' not in st.session_state:
-    st.session_state.cases_db = []
+# 2. تخزين البيانات (المادة العلمية والقضايا)
+if 'library_data' not in st.session_state: st.session_state.library_data = []
+if 'archive_data' not in st.session_state: st.session_state.archive_data = []
 
-# 3. عرض الأقسام الرئيسية (فتح مباشر كما طلبت)
+# 3. الأقسام الستة (كل قسم وحدة مستقلة)
 
-# --- القسم الأول: لوحة تحكم المستشار (لرفع المادة العلمية والملفات) ---
-with st.expander("🔐 أولاً: لوحة تحكم المستشار (رفع المادة العلمية والملفات)", expanded=True):
-    pwd = st.text_input("كلمة مرور الإدارة للرفع:", type="password")
+# --- القسم الأول: لوحة التحكم (لرفع المادة العلمية) ---
+with st.expander("🔐 لوحة تحكم المستشار (رفع المادة العلمية)", expanded=True):
+    pwd = st.text_input("كلمة مرور الإدارة:", type="password")
     if pwd == "Waleed2026":
-        st.success("مرحباً سيادة المستشار. هنا ترفع المادة التي سيبحث فيها الذكاء الاصطناعي.")
-        with st.form("upload_form"):
-            category = st.selectbox("تصنيف الملف:", ["قوانين", "تعليمات", "منشورات", "أحكام", "كتب دورية"])
-            doc_title = st.text_input("اسم المستند:")
-            doc_file = st.file_uploader("اختر الملف لرفعه للمكتبة (PDF/Text/Word)")
-            doc_text = st.text_area("أو انسخ النص هنا مباشرة (ليتعرف عليه الذكاء الاصطناعي):")
-            if st.form_submit_button("✅ رفع ونشر في المكتبة"):
-                st.session_state.library_db.append({"القسم": category, "العنوان": doc_title, "المحتوى": doc_text})
-                st.success("تم الحفظ بنجاح.")
-    elif pwd != "":
-        st.error("الصلاحية للمستشار وليد حماد فقط.")
+        st.write("ارفع الملفات التي سيبحث فيها الذكاء الاصطناعي:")
+        uploaded_file = st.file_uploader("اختر ملف (PDF/Word/Text)", key="lib_upload")
+        raw_text = st.text_area("أو انسخ المادة القانونية هنا مباشرة:")
+        if st.button("✅ اعتماد المادة ونشرها"):
+            st.session_state.library_data.append({"مادة": raw_text if raw_text else uploaded_file.name})
+            st.success("تمت إضافة المادة العلمية بنجاح.")
 
-# --- القسم الثاني: المكتبة القانونية (تصفح وتحميل وبحث ذكي) ---
-with st.expander("📚 ثانياً: المكتبة القانونية الرقمية والبحث الذكي", expanded=False):
-    st.info("هنا يبحث الذكاء الاصطناعي في المادة التي رفعتها سيادتك.")
-    search_q = st.text_input("🔍 ابحث في المادة العلمية (مثال: شروط استحقاق المعاش)...")
-    
-    # تصفية النتائج من المادة المرفوعة
-    results = [i for i in st.session_state.library_db if search_q.lower() in i['العنوان'].lower() or search_q in i['المحتوى']]
-    
-    if results:
-        for res in results:
-            col1, col2 = st.columns([5, 1])
-            with col1: st.write(f"📄 **{res['القسم']}**: {res['العنوان']}")
-            with col2: st.download_button("📥 تحميل", data=res['المحتوى'], file_name=f"{res['العنوان']}.txt")
-    
-    st.markdown("---")
-    if st.button("🤖 استشارة الذكاء الاصطناعي في المادة المرفوعة"):
-        st.subheader("تحليل الذكاء الاصطناعي:")
-        st.write("بناءً على المادة العلمية التي قمت برفعها، الرأي القانوني هو...")
+# --- القسم الثاني: المكتبة والبحث والتحميل ---
+with st.expander("📚 المكتبة القانونية (البحث والتحميل)", expanded=False):
+    search_q = st.text_input("🔍 ابحث في المادة العلمية المرفوعة:")
+    if st.session_state.library_data:
+        for item in st.session_state.library_data:
+            st.write(f"📄 مادة متاحة: {item['مادة'][:100]}...")
+            st.download_button("📥 تحميل المادة", data=item['مادة'], file_name="law_document.txt")
+    else:
+        st.info("المكتبة بانتظار رفع المادة العلمية من لوحة التحكم.")
 
-# --- القسم الثالث: إدارة القضايا والتحقيقات ---
-with st.expander("⚖️ ثالثاً: إدارة القضايا والتحقيقات (صياغة وتحميل)", expanded=False):
-    c1, c2 = st.columns(2)
-    with c1:
-        case_no = st.text_input("رقم الملف/القضية")
-        opponent = st.text_input("الخصم")
-    with c2:
-        case_type = st.selectbox("النوع:", ["قضية", "تحقيق", "فتوى"])
-        court = st.text_input("المحكمة/جهة التحقيق")
+# --- القسم الثالث: الإدارة العامة للقضايا (صياغة وتحميل) ---
+with st.expander("⚖️ الإدارة العامة للقضايا (الصياغة والتحميل)", expanded=False):
+    col1, col2 = st.columns(2)
+    with col1:
+        case_id = st.text_input("رقم القضية")
+        opp = st.text_input("الخصم")
+    with col2:
+        court = st.text_input("المحكمة")
+        file_case = st.file_uploader("أيقونة تحميل مستندات القضية", key="case_up")
     
-    case_facts = st.text_area("الوقائع والصياغة:")
+    draft = st.text_area("اكتب الوقائع ليقوم الذكاء الاصطناعي بصياغتها:")
+    if st.button("💾 حفظ في الأرشيف"):
+        st.session_state.archive_data.append({"الرقم": case_id, "الخصم": opp, "المحكمة": court})
     
-    col_btn1, col_btn2 = st.columns(2)
-    with col_btn1:
-        if st.button("💾 حفظ في الأرشيف"):
-            st.session_state.cases_db.append({"الرقم": case_no, "الخصم": opponent, "النوع": case_type})
-            st.success("تم الحفظ في الأرشيف.")
-    with col_btn2:
-        # أيقونة التحميل للقضايا التي طلبتها
-        st.download_button("📥 تحميل مسودة المذكرة", data=case_facts, file_name=f"مذكرة_{case_no}.txt")
+    # أيقونة التحميل التي طلبتها
+    st.download_button("📥 تحميل مسودة المذكرة النهائية", data=draft, file_name=f"مذكرة_{case_id}.txt")
 
 # --- القسم الرابع: البحث في الأرشيف ---
-with st.expander("📂 رابعاً: البحث في الأرشيف", expanded=False):
-    st.write("السجلات المحفوظة:")
-    if st.session_state.cases_db:
-        st.table(pd.DataFrame(st.session_state.cases_db))
-    else:
-        st.info("الأرشيف فارغ حالياً.")
+with st.expander("📂 البحث في الأرشيف", expanded=False):
+    search_arch = st.text_input("ابحث برقم القضية في الأرشيف:")
+    if st.session_state.archive_data:
+        df = pd.DataFrame(st.session_state.archive_data)
+        st.dataframe(df, use_container_width=True)
+
+# --- الأقسام المتبقية (الفتوى والتحقيقات) ---
+with st.expander("📜 الإدارة العامة للفتوى", expanded=False):
+    st.write("قسم الفتوى قيد التشغيل...")
+with st.expander("🔍 الإدارة العامة للتحقيقات", expanded=False):
+    st.write("قسم التحقيقات قيد التشغيل...")
