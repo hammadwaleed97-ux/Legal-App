@@ -1,9 +1,9 @@
 import streamlit as st
 
-# 1. إعدادات الصفحة الأساسية (ثابتة)
-st.set_page_config(page_title="منظومة المستشار القانوني", layout="wide", page_icon="⚖️")
+# 1. الإعدادات وتثبيت الصفحة الأولى
+st.set_page_config(page_title="منظومة المستشار القانوني", layout="wide")
 
-# 2. واجهة الصفحة الأولى (اللوجو المعتمد)
+# اللوجو المعتمد (ثابت)
 st.markdown("""
     <div style="text-align: center; border: 3px solid #1E3A8A; padding: 20px; border-radius: 15px; background-color: #f8f9fa; margin-bottom: 25px;">
         <h2 style="color: #ce1126; margin: 10px 0;">مع تحيات المستشار / وليد حماد</h2>
@@ -12,26 +12,37 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# 3. إدارة التنقل عبر الأيقونات (ثابتة)
+# 2. نظام التنقل (الأيقونات الثابتة)
 if 'page' not in st.session_state:
     st.session_state.page = "الرئيسية"
 
-st.markdown("### الأقسام الرئيسية للمنظومة")
-cols = st.columns(2)
-with cols[0]:
+c1, c2 = st.columns(2)
+with c1:
     if st.button("⚖️ أولاً: الإدارة العامة للقضايا", use_container_width=True): st.session_state.page = "قضايا"
     if st.button("🔍 ثالثاً: الإدارة العامة للتحقيقات والنيابات", use_container_width=True): st.session_state.page = "تحقيقات"
     if st.button("📂 خامساً: البحث والأرشيف", use_container_width=True): st.session_state.page = "أرشيف"
-with cols[1]:
+with c2:
     if st.button("📜 ثانياً: الإدارة العامة للفتوى", use_container_width=True): st.session_state.page = "فتوى"
     if st.button("📚 رابعاً: المكتبة القانونية الرقمية", use_container_width=True): st.session_state.page = "مكتبة"
     if st.button("🏠 العودة للشاشة الرئيسية", use_container_width=True): st.session_state.page = "الرئيسية"
 
 st.markdown("---")
 
-# 4. تفصيل الأقسام بناءً على المعطيات الصحيحة
+# 3. تنفيذ الأقسام بناءً على المعطيات الكاملة
 
-# --- قسم القضايا (تم فصل القضاء العادي عن الإداري) ---
 if st.session_state.page == "قضايا":
-    st.header("⚖️ أولاً: الإدارة العامة للقضايا (القسم القضائي)")
-    court_type = st.radio("نوع القضاء:", ["القضاء العادي", "مجلس الدولة (
+    st.header("⚖️ أولاً: الإدارة العامة للقضايا")
+    # حل مشكلة التداخل: اختيار نوع القضاء أولاً
+    court_type = st.radio("نوع القضاء:", ["القضاء العادي (مدني/عمالي)", "مجلس الدولة (إداري/تأديبي)"], horizontal=True)
+    
+    if court_type == "القضاء العادي":
+        court_level = st.selectbox("المحكمة:", ["نقض", "استئناف عالي", "ابتدائي", "جزئي"])
+    else:
+        court_level = st.selectbox("المحكمة:", ["الإدارية العليا", "القضاء الإداري", "المحكمة التأديبية", "المحكمة الإدارية"])
+
+    action = st.selectbox("الإجراء:", ["صياغة مذكرة دفاع", "صحيفة طعن مقام من الهيئة", "مذكرة برأي الهيئة"])
+    
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.text_input("رقم الدعوى / الطعن")
+        st.text_input("الم
