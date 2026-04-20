@@ -1,70 +1,71 @@
 import streamlit as st
 
-# 1. الإعدادات الأساسية
-st.set_page_config(page_title="منظومة المستشار وليد حماد", layout="wide")
+# 1. إعدادات الصفحة الأساسية
+st.set_page_config(page_title="مستشارك القانوني - وليد حماد", layout="wide", page_icon="⚖️")
 
-# 2. الترويسة الثابتة
+# 2. اللوجو المعدل حسب طلبك (البيانات الثابتة)
 st.markdown("""
-    <div style="text-align: center; border: 3px solid #1E3A8A; padding: 15px; border-radius: 15px; background-color: #f8f9fa;">
-        <h2 style="color: #1E3A8A; margin: 0;">الهيئة القومية للتأمين الاجتماعي</h2>
-        <h3 style="color: #1E3A8A; margin: 5px;">الإدارة العامة للشئون القانونية</h3>
-        <h4 style="color: #ce1126; margin: 5px;">مع تحيات أ/ وليد حماد</h4>
+    <div style="text-align: center; border: 3px solid #1E3A8A; padding: 20px; border-radius: 15px; background-color: #f8f9fa; margin-bottom: 25px;">
+        <h1 style="color: #1E3A8A; margin: 0; font-family: 'Arial';">مستشارك القانونى</h1>
+        <h2 style="color: #ce1126; margin: 10px 0;">مع تحيات المستشار / وليد حماد</h2>
+        <h3 style="color: #1E3A8A; margin: 5px;">الادارة العامة للشؤون القانونية</h3>
+        <h3 style="color: #1E3A8A; margin: 0;">بالهيئة القومية للتأمين الاجتماعى</h3>
     </div>
 """, unsafe_allow_html=True)
 
-# 3. نظام التنقل
+# 3. نظام إدارة الصفحات
 if 'page' not in st.session_state:
     st.session_state.page = "الرئيسية"
 
-st.write("---")
+# 4. توزيع الأيقونات (الشبكة الرئيسية - Grid) حسب المعطيات
+st.write("### الأقسام الرئيسية للمنظومة")
+c1, c2 = st.columns(2)
+c3, c4 = st.columns(2)
+c5, c6 = st.columns(2)
 
-# توزيع الأيقونات (الشبكة الرئيسية)
-col1, col2 = st.columns(2)
-col3, col4 = st.columns(2)
-col5, col6 = st.columns(2)
+with c1:
+    if st.button("⚖️ أولاً: الإدارة العامة للقضايا", use_container_width=True): st.session_state.page = "قضايا"
+with c2:
+    if st.button("📜 ثانياً: الإدارة العامة للفتوى", use_container_width=True): st.session_state.page = "فتوى"
+with c3:
+    if st.button("🔍 ثالثاً: الإدارة العامة للتحقيقات والنيابات", use_container_width=True): st.session_state.page = "تحقيقات"
+with c4:
+    if st.button("📚 رابعاً: المكتبة القانونية الرقمية", use_container_width=True): st.session_state.page = "مكتبة"
+with c5:
+    if st.button("📂 خامساً: البحث والأرشيف", use_container_width=True): st.session_state.page = "أرشيف"
+with c6:
+    if st.button("🏠 العودة للشاشة الرئيسية", use_container_width=True): st.session_state.page = "الرئيسية"
 
-with col1:
-    if st.button("⚖️ قسم القضايا", use_container_width=True): st.session_state.page = "قضايا"
-with col2:
-    if st.button("📜 قسم الفتوى", use_container_width=True): st.session_state.page = "فتوى"
-with col3:
-    if st.button("🔍 التحقيقات", use_container_width=True): st.session_state.page = "تحقيقات"
-with col4:
-    if st.button("📚 المكتبة الرقمية", use_container_width=True): st.session_state.page = "مكتبة"
-with col5:
-    if st.button("📂 الأرشيف", use_container_width=True): st.session_state.page = "أرشيف"
-with col6:
-    if st.button("🏠 الرئيسية", use_container_width=True): st.session_state.page = "الرئيسية"
+st.markdown("---")
 
-st.write("---")
+# --- معالجة محتوى الأقسام بناءً على المعطيات التفصيلية ---
 
-# --- محتوى الأقسام ---
-
+# 1. قسم القضايا (القسم القضائي)
 if st.session_state.page == "قضايا":
-    st.header("⚖️ إدارة القضايا (القسم القضائي)")
-    court_select = st.selectbox("المحكمة", ["ابتدائي", "استئناف", "نقض", "مجلس دولة"])
-    st.text_input("رقم الدعوى")
-    st.text_area("الوقائع")
-    st.button("صياغة المذكرة")
+    st.header("⚖️ أولاً: الإدارة العامة للقضايا (القسم القضائي)")
+    court_type = st.selectbox("نوع القضاء:", ["القضاء العادي (مدني/عمالي/جنائي)", "محاكم مجلس الدولة"])
+    
+    if court_type == "القضاء العادي":
+        level = st.radio("المستوى القضائي:", ["المحاكم الابتدائية", "المحاكم الاستئنافية", "محكمة النقض"], horizontal=True)
+        action = st.selectbox("الإجراء:", [
+            "صياغة مذكرة دفاع (الهيئة مدعى عليها)", "صياغة مذكرة دفاع (الهيئة مدعية)",
+            "صياغة صحيفة استئناف مقام من الهيئة", "صياغة صحيفة طعن بالنقض",
+            "مذكرة دفاع (الهيئة طاعنة/مستأنفة)", "مذكرة دفاع (الهيئة مطعون ضدها/مستأنف ضدها)"
+        ])
+    else: # مجلس الدولة
+        level = st.selectbox("المحكمة:", ["المحاكم الإدارية", "المحاكم التأديبية", "محاكم القضاء الإداري", "المحكمة الإدارية العليا"])
+        action = st.selectbox("الإجراء:", ["صياغة مذكرة دفاع", "صياغة طعن أمام الإدارية العليا"])
 
+    st.text_input("رقم الدعوى/الطعن والسنـة")
+    st.text_input("المحكمة والدائرة")
+    st.text_area("ملخص الوقائع والطلبات")
+    st.button("بدء الصياغة القانونية الآلية")
+
+# 2. قسم الفتوى (قسم الإفتاء)
 elif st.session_state.page == "فتوى":
-    st.header("📜 إدارة الفتوى")
-    st.radio("القسم", ["عامة", "إصابات", "زواج عرفي"], horizontal=True)
-    st.button("صياغة الرأي")
+    st.header("📜 ثانياً: الإدارة العامة للفتوى (قسم الإفتاء)")
+    f_type = st.radio("تخصص الفتوى:", ["فتاوى عامة", "إصابات عمل", "شكاوى الزواج العرفي"], horizontal=True)
+    st.text_area("عرض الوقائع ومحل البحث القانوني")
+    st.button("صياغة مذكرة الرأي")
 
-elif st.session_state.page == "تحقيقات":
-    st.header("🔍 التحقيقات والنيابات")
-    st.text_input("اسم المحال للتحقيق")
-    st.button("بدء المحضر")
-
-elif st.session_state.page == "مكتبة":
-    st.header("📚 المكتبة القانونية")
-    st.selectbox("القسم", ["قوانين", "لوائح", "تعليمات", "أحكام"])
-    st.file_uploader("رفع مستند")
-
-elif st.session_state.page == "أرشيف":
-    st.header("📂 الأرشيف")
-    st.text_input("بحث بالاسم أو الرقم")
-
-else:
-    st.info("مرحباً بك يا سيادة المستشار. اختر قسماً من الأيقونات أعلاه للبدء.")
+# 3. قسم التحقي
