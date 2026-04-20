@@ -1,79 +1,78 @@
 import streamlit as st
 import pandas as pd
 
-# 1. إعدادات الهوية واللوجو
+# 1. إعدادات الهوية واللوجو الثابتة (الصفحة الأولى)
 st.set_page_config(page_title="منظومة المستشار وليد حماد", layout="wide")
 
 st.markdown("""
-    <div style="text-align: center; border: 3px solid #1E3A8A; padding: 20px; border-radius: 15px; background-color: #f8f9fa;">
-        <h2 style="color: #ce1126;">مع تحيات المستشار / وليد حماد</h2>
-        <h3 style="color: #1E3A8A;">الادارة العامة للشؤون القانونية بالهيئة القومية للتأمين الاجتماعي</h3>
+    <div style="text-align: center; border: 3px solid #1E3A8A; padding: 20px; border-radius: 15px; background-color: #f8f9fa; margin-bottom: 20px;">
+        <h2 style="color: #ce1126; margin: 10px 0;">مع تحيات المستشار / وليد حماد</h2>
+        <h3 style="color: #1E3A8A; margin: 5px;">الادارة العامة للشؤون القانونية بالهيئة القومية للتأمين الاجتماعى</h3>
     </div>
 """, unsafe_allow_html=True)
 
-# 2. نظام التحكم (كلمة المرور لك أنت فقط)
+# 2. إدارة الحالة وقاعدة البيانات المؤقتة
+if 'library' not in st.session_state:
+    st.session_state.library = [
+        {"القسم": "القوانين", "العنوان": "قانون التأمينات رقم 148 لسنة 2019", "الرابط": "#"},
+        {"القسم": "الكتب الدورية", "العنوان": "كتاب دوري رقم 1 لسنة 2024", "الرابط": "#"}
+    ]
 if 'is_admin' not in st.session_state:
     st.session_state.is_admin = False
 
-with st.sidebar:
-    st.title("🔐 بوابة الإدارة")
-    password = st.text_input("كلمة مرور الإدارة:", type="password")
-    if password == "Waleed2026": # يمكنك تغيير كلمة المرور هنا
+# 3. نظام التنقل (الأيقونات الرئيسية)
+page = st.sidebar.selectbox("القائمة الرئيسية", ["🏠 الشاشة الرئيسية", "📚 المكتبة القانونية", "📂 الأرشيف والبحث", "⚙️ لوحة تحكم الإدارة"])
+
+# --- صفحة لوحة التحكم (لك أنت فقط) ---
+if page == "⚙️ لوحة تحكم الإدارة":
+    st.header("🔐 إدارة المنظومة (المستشار فقط)")
+    pwd = st.text_input("أدخل كلمة المرور للإضافة والتعديل:", type="password")
+    if pwd == "Waleed2026":
         st.session_state.is_admin = True
-        st.success("مرحباً سيادة المستشار، تم تفعيل صلاحيات الإدارة.")
+        st.success("تم تفعيل صلاحيات الإدارة")
+        
+        with st.form("add_law"):
+            st.subheader("إضافة مادة قانونية جديدة للمكتبة")
+            cat = st.selectbox("القسم:", ["القوانين", "اللوائح", "الكتب الدورية", "تعليمات الهيئة", "أحكام قضائية"])
+            title = st.text_input("اسم المستند:")
+            link = st.text_input("رابط التحميل (أو اكتب 'متاح'):")
+            if st.form_submit_button("حفظ في المكتبة"):
+                st.session_state.library.append({"القسم": cat, "العنوان": title, "الرابط": link})
+                st.success("تمت الإضافة بنجاح")
     else:
-        st.session_state.is_admin = False
+        st.error("هذا القسم مخصص للمستشار وليد حماد فقط.")
 
-# 3. محاكة قاعدة بيانات المكتبة
-if 'library_db' not in st.session_state:
-    st.session_state.library_db = [
-        {"القسم": "القوانين", "العنوان": "قانون التأمينات الجديد", "الرابط": "https://example.com/law1.pdf"},
-        {"القسم": "الكتب الدورية", "العنوان": "كتاب دوري رقم 1 لسنة 2024", "الرابط": "https://example.com/book1.pdf"}
-    ]
-
-# 4. واجهة البرنامج الرئيسية
-st.markdown("---")
-page = st.selectbox("اختر الإدارة المعنية:", ["الرئيسية", "المكتبة القانونية الرقمية", "الأرشيف والبحث"])
-
-if page == "المكتبة القانونية الرقمية":
-    st.header("📚 المكتبة القانونية الرقمية (مرتبطة بالذكاء الاصطناعي)")
+# --- صفحة المكتبة القانونية (للكل: بحث وتحميل) ---
+elif page == "📚 المكتبة القانونية":
+    st.header("📚 المكتبة القانونية الرقمية الذكية")
+    st.info("يمكنك البحث عن أي نص قانوني وتحميله مباشرة.")
     
-    # الجزء الخاص بك أنت (إضافة قوانين جديدة)
-    if st.session_state.is_admin:
-        with st.expander("➕ لوحة تحكم الإدارة: إضافة قوانين جديدة"):
-            new_cat = st.selectbox("اختر القسم:", ["القوانين", "اللوائح", "الكتب الدورية", "أحكام قضائية"])
-            new_title = st.text_input("عنوان القانون/القرار")
-            new_link = st.text_input("رابط التحميل (URL)")
-            if st.button("حفظ وإضافة للمكتبة"):
-                st.session_state.library_db.append({"القسم": new_cat, "العنوان": new_title, "الرابط": new_link})
-                st.success("تمت الإضافة بنجاح!")
-
-    # الجزء الخاص بالمستخدمين (بحث وتحميل فقط)
-    st.markdown("### 🔎 البحث والتحميل")
-    search_query = st.text_input("ابحث عن نص قانوني أو اطلب من الذكاء الاصطناعي تلخيصه...")
+    search = st.text_input("🔍 ابحث في المكتبة (مثلاً: قانون 148)...")
     
-    # تصفية النتائج بناءً على البحث
-    results = [item for item in st.session_state.library_db if search_query.lower() in item['العنوان'].lower()]
+    # محرك البحث والذكاء الاصطناعي
+    results = [i for i in st.session_state.library if search.lower() in i['العنوان'].lower()]
     
     if results:
         for res in results:
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.write(f"📌 **{res['القسم']}**: {res['العنوان']}")
-            with col2:
-                # أيقونة التحميل التي طلبتها
-                st.markdown(f'<a href="{res["الابط"]}" target="_blank" style="text-decoration:none; background-color:#1E3A8A; color:white; padding:5px 15px; border-radius:5px;">📥 تحميل</a>', unsafe_allow_html=True)
-    else:
-        st.info("لا توجد نتائج مطابقة لبحثك حالياً.")
-
+            col1, col2, col3 = st.columns([2, 4, 1])
+            with col1: st.markdown(f"**{res['القسم']}**")
+            with col2: st.write(res['العنوان'])
+            with col3:
+                # أيقونة التحميل المباشرة
+                st.download_button(label="📥 تحميل", data=f"محتوى: {res['العنوان']}", file_name=f"{res['العنوان']}.txt", key=res['العنوان'])
+    
+    st.markdown("---")
     if st.button("🤖 استشارة الذكاء الاصطناعي حول هذه القوانين"):
-        st.info("جاري ربط استفسارك بمحتوى المكتبة القانونية...")
-        st.write("بناءً على المكتبة، الموضوع الذي تسأل عنه تنظمه المادة رقم...")
+        st.subheader("تحليل الذكاء الاصطناعي:")
+        st.write("بناءً على نصوص المكتبة، فإن الموقف القانوني يتطلب تطبيق المادة...")
 
-elif page == "الأرشيف والبحث":
-    st.header("📂 الأرشيف المركزي")
-    st.write("هذا القسم يعرض السجلات المؤرشفة للأعضاء.")
-    # عرض جدول البيانات هنا
+# --- صفحة الأرشيف ---
+elif page == "📂 الأرشيف والبحث":
+    st.header("📂 الأرشيف المركزي للدعاوى والفتوى")
+    st.write("يتم هنا أرشفة كافة الأعمال التي تم حفظها.")
+    # عرض جدول البيانات
+    df = pd.DataFrame(st.session_state.library)
+    st.dataframe(df, use_container_width=True)
 
 else:
-    st.info("اختر قسماً من القائمة أعلاه للبدء.")
+    st.success("مرحباً بك يا سيادة المستشار. المنظومة جاهزة للعمل.")
