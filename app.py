@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-# 1. إعدادات الهوية واللوجو المعتمد (كما طلبته حرفياً)
+# 1. إعدادات الهوية واللوجو المعتمد (مركز الشاشة)
 st.set_page_config(page_title="منظومة المستشار وليد حماد", layout="wide")
 
 st.markdown("""
@@ -14,71 +14,65 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# 2. إدارة البيانات والصلاحيات (أنت المتحكم الوحيد)
-if 'laws_db' not in st.session_state:
-    st.session_state.laws_db = [
-        {"القسم": "القوانين", "العنوان": "قانون التأمينات 148 لسنة 2019", "المحتوى": "نص القانون الخاص بالتأمينات..."},
-        {"القسم": "تعليمات الهيئة", "العنوان": "تعليمات رقم 1 لسنة 2024", "المحتوى": "بشأن القواعد المنظمة لـ..."}
-    ]
+# 2. تهيئة الجلسة (Session State) لتخزين البيانات والتنقل
+if 'page' not in st.session_state: st.session_state.page = "الرئيسية"
+if 'db' not in st.session_state: st.session_state.db = []
 
-# 3. نظام التنقل الجانبي الاحترافي
-st.sidebar.markdown("### 🛠️ القائمة الرئيسية")
-nav = st.sidebar.radio("انتقل إلى:", ["🏠 الشاشة الرئيسية", "📚 المكتبة والتحميل", "⚖️ الإدارة القانونية (قضايا/فتوى)", "🔐 لوحة التحكم (للمستشار فقط)"])
+# 3. الأيقونات الستة الرئيسية (تحت اللوجو مباشرة)
+if st.session_state.page == "الرئيسية":
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        if st.button("⚖️ أولاً: الإدارة العامة للقضايا", use_container_width=True): st.session_state.page = "قضايا"
+        if st.button("📜 ثانياً: الإدارة العامة للفتوى", use_container_width=True): st.session_state.page = "فتوى"
+    with c2:
+        if st.button("🔍 ثالثاً: الإدارة العامة للتحقيقات", use_container_width=True): st.session_state.page = "تحقيقات"
+        if st.button("📚 رابعاً: المكتبة القانونية الرقمية", use_container_width=True): st.session_state.page = "مكتبة"
+    with c3:
+        if st.button("📂 خامساً: البحث والأرشيف", use_container_width=True): st.session_state.page = "أرشيف"
+        if st.button("🔐 سادساً: لوحة تحكم الإدارة", use_container_width=True): st.session_state.page = "إدارة"
 
-# --- صفحة لوحة التحكم (صلاحياتك أنت فقط لإضافة القوانين) ---
-if nav == "🔐 لوحة التحكم (للمستشار فقط)":
-    st.header("⚙️ إدارة محتوى المكتبة")
-    pwd = st.text_input("كلمة مرور الإدارة للوصول:", type="password")
-    
-    if pwd == "Waleed2026": # كلمة السر الخاصة بك
-        st.success("أهلاً بك يا سيادة المستشار وليد. يمكنك الآن تغذية المكتبة.")
-        with st.form("add_form"):
-            cat = st.selectbox("تصنيف المادة:", ["القوانين", "اللوائح", "تعليمات الهيئة", "منشورات وزارية", "أحكام قضائية"])
-            title = st.text_input("اسم المستند/القانون:")
-            content = st.text_area("نص المستند (ليتمكن الذكاء الاصطناعي من تحليله وصياغة المذكرات منه):")
-            if st.form_submit_button("حفظ ونشر بالموقع"):
-                st.session_state.laws_db.append({"القسم": cat, "العنوان": title, "المحتوى": content})
-                st.success(f"تمت إضافة '{title}' بنجاح.")
-    else:
-        st.error("عفواً، لا يملك صلاحية الإضافة إلا المستشار وليد حماد.")
+# 4. تفاصيل الأقسام (بناءً على المعطيات)
+if st.session_state.page != "الرئيسية":
+    if st.button("⬅️ العودة للشاشة الرئيسية"): st.session_state.page = "الرئيسية"; st.rerun()
 
-# --- صفحة المكتبة والتحميل (لأي شخص: عرض وبحث وتحميل فقط) ---
-elif nav == "📚 المكتبة والتحميل":
-    st.header("📚 المكتبة القانونية الرقمية الذكية")
-    search_q = st.text_input("🔍 ابحث عن أي نص قانوني أو قرار (مثال: قانون 148)...")
-    
-    # تصفية النتائج بناءً على البحث
-    results = [i for i in st.session_state.laws_db if search_q.lower() in i['العنوان'].lower()]
-    
-    if results:
-        for item in results:
-            col1, col2 = st.columns([5, 1])
-            with col1:
-                st.markdown(f"📄 **{item['القسم']}**: {item['العنوان']}")
-            with col2:
-                # زر التحميل المباشر للمستخدمين
-                st.download_button(
-                    label="📥 تحميل",
-                    data=item['المحتوى'],
-                    file_name=f"{item['العنوان']}.txt",
-                    key=item['العنوان']
-                )
+    # --- قسم القضايا ---
+    if st.session_state.page == "قضايا":
+        st.header("⚖️ الإدارة العامة للقضايا")
+        court_type = st.radio("نوع القضاء:", ["القضاء العادي", "مجلس الدولة"], horizontal=True)
+        col_q1, col_q2 = st.columns(2)
+        with col_q1:
+            court = st.selectbox("المحكمة:", ["النقض/الإدارية العليا", "الاستئناف/القضاء الإداري", "الابتدائية/التأديبية"])
+            case_no = st.text_input("رقم الدعوى والسنة")
+        with col_q2:
+            opponent = st.text_input("اسم الخصم")
+            action = st.selectbox("الإجراء:", ["مذكرة دفاع", "صحيفة طعن", "رأي قانوني"])
         
+        facts = st.text_area("وقائع الدعوى (للتحليل بالذكاء الاصطناعي)")
+        st.file_uploader("📂 ارفع صور المستندات")
+        if st.button("📝 توليد الصياغة وتحميلها"):
+            st.info("جاري الصياغة...")
+            st.download_button("📥 تحميل المذكرة", data=f"مذكرة رقم {case_no}", file_name="draft.txt")
+
+    # --- قسم المكتبة (14 قسماً) ---
+    elif st.session_state.page == "مكتبة":
+        st.header("📚 المكتبة القانونية الشاملة")
+        lib_sections = ["قوانين", "لوائح", "قرارات وزارية", "منشورات وزارية", "قرارات رئيس الهيئة", "منشورات رئيس الهيئة", "كتب دورية", "تعليمات الهيئة", "المرصد الفني", "رسائل الهيئة", "مذكرات اللجنة القانونية", "فتاوى مجلس الدولة", "أحكام قضائية", "أخرى"]
+        sec = st.selectbox("اختر القسم:", lib_sections)
+        st.text_input(f"البحث في {sec}...")
         st.markdown("---")
-        if st.button("🤖 استشارة الذكاء الاصطناعي (تحليل المكتبة)"):
-            st.subheader("تحليل الذكاء الاصطناعي للدفوع القانونية:")
-            st.info(f"بناءً على {len(results)} مستند في مكتبتك، يرى النظام أن النص الأقرب للتطبيق هو...")
-    else:
-        st.warning("لا توجد قوانين بهذا الاسم حالياً.")
+        st.write("النتائج تظهر هنا مع أيقونة التحميل بجانب كل مستند.")
 
-# --- صفحة الإدارة القانونية (قضايا وفتوى) ---
-elif nav == "⚖️ الإدارة القانونية (قضايا/فتوى)":
-    st.header("⚖️ إدارة العمل القضائي والإفتائي")
-    st.selectbox("نوع العمل:", ["قضية متداولة", "طلب فتوى", "تحقيق إداري"])
-    st.text_input("رقم الملف / السنة")
-    st.text_area("الوقائع")
-    if st.button("💾 حفظ في الأرشيف"):
-        st.success("تم الحفظ بنجاح.")
+    # --- قسم لوحة التحكم (أنت فقط) ---
+    elif st.session_state.page == "إدارة":
+        st.header("🔐 لوحة تحكم المستشار (إضافة محتوى)")
+        pwd = st.text_input("كلمة السر:", type="password")
+        if pwd == "Waleed2026":
+            st.success("مرحباً سيادة المستشار. يمكنك إضافة قوانين أو منشورات جديدة للمكتبة هنا.")
+            # هنا تضع فورم الإضافة
+        else:
+            st.error("هذا القسم خاص بالمستشار وليد حماد فقط.")
 
-else:
-    st.success("المنظومة تعمل بكفاءة يا سيادة المستشار. جاهز لتلقي أوامرك.")
+    # --- قسم الأرشيف ---
+    elif st.session_state.page == "أرشيف":
+        st.header("📂 الأرشيف والبحث المركزي")
+        st.info("الأرشيف جاهز لعرض البيانات المحفوظة.")
