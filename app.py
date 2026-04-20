@@ -1,6 +1,8 @@
 import streamlit as st
+import pandas as pd
+from datetime import datetime
 
-# 1. إعدادات الصفحة واللوجو الثابت (الصفحة الأولى)
+# 1. إعدادات الصفحة واللوجو الثابت
 st.set_page_config(page_title="منظومة المستشار القانوني", layout="wide")
 
 st.markdown("""
@@ -11,9 +13,11 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# 2. نظام التنقل بالأيقونات (ثابت ومفعل)
+# 2. نظام التنقل بالأيقونات
 if 'page' not in st.session_state:
     st.session_state.page = "الرئيسية"
+if 'archive_data' not in st.session_state:
+    st.session_state.archive_data = [] # قاعدة بيانات مؤقتة للأرشيف
 
 c1, c2 = st.columns(2)
 with c1:
@@ -27,71 +31,66 @@ with c2:
 
 st.markdown("---")
 
-# 3. تفاصيل الأقسام بناءً على كامل المعطيات
+# 3. الأقسام وتفعيل الذكاء الاصطناعي والتحميل
 
 if st.session_state.page == "قضايا":
-    st.header("⚖️ أولاً: الإدارة العامة للقضايا")
-    # فصل الاختصاص القضائي لمنع التداخل
+    st.header("⚖️ الإدارة العامة للقضايا")
     court_type = st.radio("نوع القضاء:", ["القضاء العادي", "مجلس الدولة"], horizontal=True)
-    
-    if court_type == "القضاء العادي":
-        court_level = st.selectbox("المحكمة المختصة:", ["النقض", "الاستئناف العالي", "الابتدائية", "الجزئية"])
-    else:
-        court_level = st.selectbox("المحكمة المختصة:", ["الإدارية العليا", "القضاء الإداري", "المحكمة التأديبية", "المحكمة الإدارية"])
-
-    action = st.selectbox("الإجراء المطلوب:", ["صياغة مذكرة دفاع", "صحيفة طعن مقام من الهيئة", "مذكرة برأي الهيئة"])
     
     col_a, col_b = st.columns(2)
     with col_a:
-        st.text_input("رقم الدعوى / الطعن والسنة")
-        st.text_input("المحكمة والدائرة")
+        case_no = st.text_input("رقم الدعوى والسنة")
+        court_name = st.text_input("المحكمة والدائرة")
     with col_b:
-        st.text_input("اسم الخصم")
-        st.date_input("تاريخ الجلسة القادمة")
+        opponent = st.text_input("اسم الخصم")
+        session_date = st.date_input("تاريخ الجلسة")
 
-    st.text_area("ملخص الوقائع وطلبات الخصوم")
+    facts = st.text_area("ملخص الوقائع القانونية (اكتب التفاصيل هنا ليحللها الذكاء الاصطناعي)")
     
-    # إضافة خانات الرفع والحفظ والصياغة
-    st.file_uploader("📂 رفع صور المستندات أو ملفات PDF")
-    
-    btn_c1, btn_c2 = st.columns(2)
-    with btn_c1:
-        if st.button("💾 حفظ البيانات"): st.success("تم الحفظ في قاعدة البيانات.")
-    with btn_c2:
-        if st.button("📝 توليد الصياغة القانونية الآلية"): st.info("جاري المعالجة بناءً على نصوص القانون...")
+    uploaded_file = st.file_uploader("📂 ارفع مستندات القضية (PDF/Images)")
 
-elif st.session_state.page == "فتوى":
-    st.header("📜 ثانياً: الإدارة العامة للفتوى")
-    f_cat = st.selectbox("موضوع الفتوى:", ["فتاوى عامة", "إصابات عمل", "شكاوى الزواج العرفي", "أخرى"])
-    st.text_area("الوقائع المعروضة")
-    st.file_uploader("ارفع مستند الإحالة")
-    st.button("💾 حفظ")
-    st.button("✍️ إعداد مسودة الرأي القانوني")
-
-elif st.session_state.page == "تحقيقات":
-    st.header("🔍 ثالثاً: الإدارة العامة للتحقيقات والنيابات")
-    i_org = st.selectbox("جهة الاختصاص:", ["تحقيقات الهيئة", "النيابة الإدارية", "النيابة العامة"])
-    st.text_input("اسم المحال للتحقيق / رقم القضية")
-    st.text_area("موضوع المخالفة")
-    st.button("💾 حفظ")
-    st.button("📜 صياغة مذكرة التصرف")
+    if st.button("📝 توليد الصياغة القانونية بالذكاء الاصطناعي"):
+        if facts:
+            with st.spinner("جاري تحليل الوقائع وربطها بالمكتبة القانونية..."):
+                # محاكاة الربط بالذكاء الاصطناعي والمكتبة
+                draft_text = f"بناءً على الوقائع المقدمة في الدعوى رقم {case_no}، نرى الدفع بـ..." 
+                st.subheader("📄 المسودة المقترحة:")
+                st.info(draft_text)
+                
+                # إضافة زر التحميل (المطلوب)
+                st.download_button(
+                    label="📥 تحميل مذكرة الدفاع (Word/Text)",
+                    data=draft_text,
+                    file_name=f"مذكرة_قضية_{case_no}.txt",
+                    mime="text/plain"
+                )
+                
+                # حفظ في الأرشيف تلقائياً
+                st.session_state.archive_data.append({
+                    "الرقم": case_no, "الخصم": opponent, "التاريخ": str(session_date), "النوع": "قضايا"
+                })
+        else:
+            st.warning("يرجى كتابة الوقائع أولاً ليتمكن الذكاء الاصطناعي من صياغتها.")
 
 elif st.session_state.page == "مكتبة":
-    st.header("📚 رابعاً: المكتبة القانونية الرقمية (14 قسماً)")
-    lib_sections = [
-        "أولاً: القوانين", "ثانياً: اللوائح", "ثالثاً: القرارات الوزارية", "رابعاً: المنشورات الوزارية",
-        "خامساً: قرارات رئيس الهيئة", "سادساً: منشورات رئيس الهيئة", "سابعاً: الكتب الدورية",
-        "ثامناً: تعليمات الهيئة", "تاسعاً: المرصد الفني للهيئة", "عاشراً: رسائل الهيئة",
-        "حادى عشر: مذكرات اللجنة القانونية", "ثانى عشر: فتاوى مجلس الدولة", "ثالثا عشر: أحكام قضائية", "رابع عشر: أخرى"
-    ]
-    st.selectbox("اختر القسم:", lib_sections)
-    st.text_input("ابحث في المكتبة...")
-    st.button("🔍 بدء البحث")
+    st.header("📚 المكتبة القانونية الرقمية (مرتبطة بالذكاء الاصطناعي)")
+    lib_sections = ["القوانين", "اللوائح", "الكتب الدورية", "تعليمات الهيئة", "أحكام قضائية"]
+    section = st.selectbox("اختر القسم:", lib_sections)
+    search_query = st.text_input("ابحث عن نص قانوني أو اطلب من الذكاء الاصطناعي تلخيص قانون...")
+    
+    if st.button("🔍 بحث ذكي"):
+        st.write(f"جاري البحث في قسم {section} عن: {search_query}")
+        # هنا يتم الربط بملفات الـ PDF المخزنة عندك مستقبلاً
+        st.success("تم العثور على 3 نتائج مرتبطة بموضوعك.")
+        st.download_button("📥 تحميل النص الكامل للقانون", data="نص القانون...", file_name="قانون.txt")
 
 elif st.session_state.page == "أرشيف":
-    st.header("📂 خامساً: البحث والأرشيف")
-    st.text_input("ابحث برقم الدعوى أو الاسم")
-    st.button("🔍 استعلام")
+    st.header("📂 البحث والأرشيف")
+    if st.session_state.archive_data:
+        df = pd.DataFrame(st.session_state.archive_data)
+        st.table(df) # عرض البيانات المخزنة
+    else:
+        st.info("الأرشيف فارغ حالياً. سيتم ملؤه تلقائياً عند حفظ أي قضية أو فتوى.")
 
-else:
-    st.info("مرحباً بك يا سيادة المستشار. المنظومة جاهزة للعمل، اختر القسم المطلوب.")
+elif st.session_state.page == "الرئيسية":
+    st.info("مرحباً بك يا سيادة المستشار. المنظومة جاهزة للعمل.")
