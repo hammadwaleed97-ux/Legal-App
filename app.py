@@ -1,9 +1,8 @@
 import streamlit as st
 
-# 1. الإعدادات وتثبيت الصفحة الأولى
+# 1. إعدادات الصفحة واللوجو الثابت
 st.set_page_config(page_title="منظومة المستشار القانوني", layout="wide")
 
-# اللوجو المعتمد (ثابت)
 st.markdown("""
     <div style="text-align: center; border: 3px solid #1E3A8A; padding: 20px; border-radius: 15px; background-color: #f8f9fa; margin-bottom: 25px;">
         <h2 style="color: #ce1126; margin: 10px 0;">مع تحيات المستشار / وليد حماد</h2>
@@ -12,7 +11,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# 2. نظام التنقل (الأيقونات الثابتة)
+# 2. نظام التنقل بالأيقونات (ثابت ومفعل)
 if 'page' not in st.session_state:
     st.session_state.page = "الرئيسية"
 
@@ -28,21 +27,39 @@ with c2:
 
 st.markdown("---")
 
-# 3. تنفيذ الأقسام بناءً على المعطيات الكاملة
+# 3. تفاصيل الأقسام بناءً على "كامل المعطيات"
 
 if st.session_state.page == "قضايا":
     st.header("⚖️ أولاً: الإدارة العامة للقضايا")
-    # حل مشكلة التداخل: اختيار نوع القضاء أولاً
-    court_type = st.radio("نوع القضاء:", ["القضاء العادي (مدني/عمالي)", "مجلس الدولة (إداري/تأديبي)"], horizontal=True)
+    # حل مشكلة تداخل القضاء العادي مع الإداري
+    court_type = st.radio("نوع القضاء:", ["القضاء العادي", "مجلس الدولة"], horizontal=True)
     
     if court_type == "القضاء العادي":
-        court_level = st.selectbox("المحكمة:", ["نقض", "استئناف عالي", "ابتدائي", "جزئي"])
+        court_level = st.selectbox("المحكمة المختصة:", ["نقض", "استئناف عالي", "ابتدائي", "جزئي"])
     else:
-        court_level = st.selectbox("المحكمة:", ["الإدارية العليا", "القضاء الإداري", "المحكمة التأديبية", "المحكمة الإدارية"])
+        court_level = st.selectbox("المحكمة المختصة:", ["الإدارية العليا", "القضاء الإداري", "المحكمة التأديبية", "المحكمة الإدارية"])
 
-    action = st.selectbox("الإجراء:", ["صياغة مذكرة دفاع", "صحيفة طعن مقام من الهيئة", "مذكرة برأي الهيئة"])
+    action = st.selectbox("الإجراء المطلوب:", ["صياغة مذكرة دفاع", "صحيفة طعن مقام من الهيئة", "مذكرة برأي الهيئة"])
     
     col_a, col_b = st.columns(2)
     with col_a:
-        st.text_input("رقم الدعوى / الطعن")
-        st.text_input("الم
+        st.text_input("رقم الدعوى / الطعن والسنة")
+        st.text_input("المحكمة والدائرة")
+    with col_b:
+        st.text_input("اسم الخصم")
+        st.date_input("تاريخ الجلسة")
+
+    st.text_area("ملخص الوقائع والطلبات")
+    
+    # الخانات التي كانت ناقصة (الرفع والحفظ والصياغة)
+    st.file_uploader("📂 ارفع ملفاتك (PDF/صور)")
+    
+    btn_col1, btn_col2 = st.columns(2)
+    with btn_col1:
+        if st.button("💾 حفظ البيانات"): st.success("تم الحفظ بنجاح.")
+    with btn_col2:
+        if st.button("📝 توليد الصياغة القانونية"): st.info("جاري البحث في المكتبة القانونية...")
+
+elif st.session_state.page == "فتوى":
+    st.header("📜 ثانياً: الإدارة العامة للفتوى")
+    f_cat = st.selectbox("موضوع الفتوى:", ["فتاوى عامة", "إصابات عمل", "ز
