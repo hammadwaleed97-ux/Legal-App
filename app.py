@@ -1,92 +1,104 @@
 import streamlit as st
 
-# إعدادات واجهة البرنامج (تدعم اللغة العربية)
-st.set_page_config(page_title="دليلك التأميني المبسط", layout="wide")
+# 1. إعدادات الصفحة الرسمية
+st.set_page_config(page_title="الوجيز الذكي في التأمينات والمعاشات", layout="wide", page_icon="⚖️")
 
+# 2. تصميم الواجهة (CSS) لتظهر بشكل فخم
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
-    html, body, [class*="css"]  {
+    
+    html, body, [class*="css"] {
         font-family: 'Cairo', sans-serif;
         direction: rtl;
         text-align: right;
     }
-    .stButton>button {
-        background-color: #2c3e50;
+    
+    /* تصميم الهيدر (العنوان) */
+    .header-box {
+        background: linear-gradient(135deg, #1e3799 0%, #0984e3 100%);
         color: white;
-        border-radius: 15px;
-        padding: 20px;
-        font-size: 18px;
-        transition: 0.3s;
+        padding: 40px;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        margin-bottom: 40px;
     }
+    
+    /* تصميم الأزرار التفاعلية */
+    .stButton>button {
+        width: 100%;
+        height: 100px;
+        background-color: #ffffff;
+        color: #2c3e50;
+        border: 2px solid #d4af37; /* ذهبي */
+        border-radius: 15px;
+        font-size: 20px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
     .stButton>button:hover {
-        background-color: #1a252f;
-        border-color: #3498db;
+        background-color: #d4af37;
+        color: white;
+        transform: scale(1.05);
     }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("⚖️ مستشارك القانوني للتأمينات والمعاشات")
-st.subheader("اضغط على الموضوع الذي يهمك لمعرفة حقك ببساطة")
+# 3. واجهة البرنامج (Header)
+st.markdown("""
+    <div class="header-box">
+        <h1 style='margin:0;'>📚 الوجيز الذكي في التأمينات والمعاشات</h1>
+        <p style='font-size: 22px; margin-top:10px;'>موسوعة قانون 148 لسنة 2019 واللائحة التنفيذية</p>
+        <p style='font-size: 16px; opacity: 0.9;'>تبسيط القانون.. حماية للحقوق</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-# قاعدة البيانات المستخرجة من الملفات المرفوعة
-legal_guide = [
+# 4. محرك البحث الذكي
+st.markdown("### 🔍 ابحث في الموسوعة:")
+search_query = st.text_input("", placeholder="اكتب كلمة للبحث (مثلاً: وفاة، زواج، إصابة، اشتراك)...")
+
+# 5. قاعدة البيانات المرتبطة بملفاتك
+legal_content = [
     {
-        "category": "المعاش عند بلوغ السن",
+        "title": "المعاش عند بلوغ السن",
         "icon": "👴",
-        "explanation": "تقدر تخرج معاش لما توصل لسن الستين (حالياً)، وبداية من سنة 2032 السن هيزيد تدريجياً لغاية ما يوصل 65 سنة في 2040. لازم يكون ليك مدة اشتراك فعلية لا تقل عن 15 سنة (هتبقى 20 سنة من أول يناير 2025).",
-        "law_ref": "مادة (21) من القانون 148 لسنة 2019",
-        "regulation_ref": "مادة (102) من اللائحة التنفيذية"
+        "explanation": "يستحق المعاش عند بلوغ سن الستين مع توافر مدة اشتراك لا تقل عن 180 شهراً (15 سنة) فعلياً. (تزيد لـ 20 سنة في 2025).",
+        "law_ref": "مادة (21) من القانون",
+        "reg_ref": "مادة (102) من اللائحة",
+        "tags": ["سن", "ستين", "شيخوخة", "مدة"]
     },
     {
-        "category": "حقوق الورثة (توزيع المعاش)",
-        "icon": "👨‍👩‍👧‍👦",
-        "explanation": "لو المؤمن عليه توفى، المعاش بيتوزع على الأرملة والأبناء والبنات والوالدين والإخوة حسب جدول توزيع الحصص. البنت بتاخد معاش طول ما هي مش متجوزة، والابن لغاية سن 21 (أو 26 لو طالب).",
-        "law_ref": "مادة (98) إلى (101) من القانون",
-        "regulation_ref": "مادة (258) من اللائحة التنفيذية"
-    },
-    {
-        "category": "منحة الزواج للبنت",
-        "icon": "👰",
-        "explanation": "البنت اللي بتاخد معاش عن والدها، لو اتجوزت، الحكومة بتصرف لها 'منحة زواج' لمرة واحدة، قيمتها تساوي معاشها الشهري مضروب في 12 شهر (يعني معاش سنة كاملة)، والحد الأدنى للمنحة دي 500 جنيه.",
+        "title": "منحة الزواج (بنت/أخت)",
+        "icon": "💍",
+        "explanation": "تصرف منحة زواج للبنت أو الأخت المستحقة للمعاش عند زواجها، قيمتها (معاش سنة) بحد أدنى 500 جنيه، وتصرف لمرة واحدة.",
         "law_ref": "مادة (105) من القانون",
-        "regulation_ref": "مادة (281) من اللائحة التنفيذية"
+        "reg_ref": "مادة (281) من اللائحة",
+        "tags": ["بنت", "زواج", "أخت", "منحة"]
     },
     {
-        "category": "إصابة العمل وحادث الطريق",
+        "title": "إصابة العمل وحادث الطريق",
         "icon": "🚑",
-        "explanation": "لو حصلت لك إصابة وأنت في شغلك أو وأنت رايح أو راجع من طريقك المعتاد، دي تعتبر إصابة عمل. ليك حق في العلاج ببلاش، وصرف أجرك كامل (100%) طول فترة الإصابة لغاية ما تخف أو يثبت عجز.",
-        "law_ref": "مادة (45) إلى (51) من القانون",
-        "regulation_ref": "مادة (155) من اللائحة التنفيذية"
+        "explanation": "تشمل الحوادث أثناء العمل أو بسببه أو في الطريق الطبيعي للعمل. يستحق المصاب تعويض أجر يعادل 100% من أجره.",
+        "law_ref": "مادة (45) من القانون",
+        "reg_ref": "مادة (155) من اللائحة",
+        "tags": ["إصابة", "حادث", "طريق", "علاج"]
     },
     {
-        "category": "تأمين البطالة (لو سبت الشغل)",
-        "icon": "💼",
-        "explanation": "لو صاحب الشغل مشاك (مش استقالة)، ليك حق تصرف تعويض بطالة لو مشترك في التأمينات لمدة سنة على الأقل. التعويض بيبدأ بـ 75% من أجرك وبياخد وقت لغاية ما تلاقي شغل جديد (بحد أقصى 7 شهور).",
-        "law_ref": "مادة (85) إلى (93) من القانون",
-        "regulation_ref": "مادة (233) من اللائحة التنفيذية"
-    },
-    {
-        "category": "المعاش المبكر",
+        "title": "المعاش المبكر",
         "icon": "⏱️",
-        "explanation": "ممكن تخرج معاش قبل السن لو ليك مدة اشتراك بتعطي معاش لا يقل عن 50% من آخر أجر اشتراك، وبشرط وجود مدة اشتراك فعلية لا تقل عن 20 سنة (هتبقى 25 سنة في يناير 2025).",
-        "law_ref": "مادة (21) بند 6 من القانون",
-        "regulation_ref": "مادة (102) فقرة ح من اللائحة"
+        "explanation": "يتطلب مدة اشتراك تعطي معاشاً لا يقل عن 50% من آخر أجر تسوية، وبمدة اشتراك فعلية لا تقل عن 20 سنة (تصبح 25 سنة في 2025).",
+        "law_ref": "مادة (21) بند 6",
+        "reg_ref": "مادة (102) فقرة ح",
+        "tags": ["مبكر", "استقالة", "تسوية"]
     }
 ]
 
-# تقسيم الأزرار في صفوف
-cols = st.columns(2)
-for index, item in enumerate(legal_guide):
-    with cols[index % 2]:
-        if st.button(f"{item['icon']} {item['category']}"):
-            st.markdown(f"### 💡 الشرح المبسط:")
-            st.info(item['explanation'])
-            
-            with st.expander("📄 السند القانوني (نصوص المادة)"):
-                st.write(f"**من القانون:** {item['law_ref']}")
-                st.write(f"**من اللائحة:** {item['regulation_ref']}")
-                st.success("يمكنك الرجوع للمواد المذكورة أعلاه في ملفات PDF الملحقة للحصول على النص الحرفي.")
-
-st.markdown("---")
-st.write("✅ **ملاحظة:** هذا البرنامج يغطي حالات عامة، للحالات الخاصة يرجى مراجعة مكتب التأمينات التابع له.")
+# 6. منطق عرض النتائج
+if search_query:
+    results = [item for item in legal_content if any(tag in search_query for tag in item['tags']) or search_query in item['title']]
+    if results:
+        for res in results:
+            with
