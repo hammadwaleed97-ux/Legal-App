@@ -80,4 +80,49 @@ legal_db = [
         "icon": "⏱️",
         "explanation": "ضوابط الخروج للمعاش قبل السن القانوني.",
         "full_text": "نصت المادة (21) بند (6) على: 'توافر مدة اشتراك فعلي تعطي الحق في معاش لا يقل عن 50% من أجر أو دخل التسوية الأخير، وبما لا يقل عن الحد الأدنى للمعاش المشار إليه بالمادة 24'.",
-        "reg_
+        "reg_text": "مادة (102) فقرة (ح) من اللائحة: تشترط ألا يقل المعاش عن 65% من الحد الأدنى لأجر الاشتراك في تاريخ استحقاق المعاش.",
+        "tags": ["مبكر", "استقالة", "تسوية", "خروج"]
+    }
+]
+
+# 5. تفعيل محرك البحث البرمجي
+search_query = st.text_input("🔍 ابحث عن أي موضوع (اكتب مثلاً: زواج، سن، إصابة، استقالة)...").strip()
+
+# 6. منطق البحث والعرض (Logic)
+if search_query:
+    # فلترة النتائج بناءً على العنوان أو الكلمات الدلالية
+    results = [item for item in legal_db if search_query in item['title'] or any(tag in search_query for tag in item['tags'])]
+    
+    if results:
+        st.markdown(f"#### نتائج البحث عن: {search_query}")
+        for res in results:
+            with st.container():
+                st.markdown(f"""
+                    <div class="law-card">
+                        <h2 style='color: #1e3799;'>{res['icon']} {res['title']}</h2>
+                        <p style='font-size: 18px;'><b>الشرح المبسط:</b> {res['explanation']}</p>
+                        <p style='color: #b21f1f; font-weight: bold;'>📄 {res['full_text']}</p>
+                        <p style='color: #1e3799;'>📚 {res['reg_text']}</p>
+                    </div>
+                """, unsafe_allow_html=True)
+    else:
+        st.warning("عذراً، لم يتم العثور على نتائج لهذه الكلمة. حاول البحث بكلمات أبسط.")
+
+else:
+    # العرض الافتراضي للأقسام
+    st.markdown("### 🌟 تصفح الأقسام الرئيسية:")
+    cols = st.columns(2)
+    for idx, item in enumerate(legal_db):
+        with cols[idx % 2]:
+            if st.button(f"{item['icon']} {item['title']}", key=idx):
+                st.markdown(f"""
+                    <div class="law-card">
+                        <h3 style='color: #1e3799;'>{item['title']}</h3>
+                        <p style='font-size: 18px;'><b>الشرح:</b> {item['explanation']}</p>
+                        <p style='color: #b21f1f; font-weight: bold;'>⚖️ {item['full_text']}</p>
+                        <p style='color: #1e3799;'>📖 {item['reg_text']}</p>
+                    </div>
+                """, unsafe_allow_html=True)
+
+st.markdown("---")
+st.markdown("<p style='text-align: center; color: gray;'>الوجيز الذكي - الإصدار القانوني المعتمد 2026</p>", unsafe_allow_html=True)
