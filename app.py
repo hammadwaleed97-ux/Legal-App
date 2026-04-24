@@ -1,7 +1,7 @@
 import streamlit as st
 
-# 1. إعدادات الصفحة
-st.set_page_config(page_title="موسوعة الدفوع القانونية", layout="wide")
+# 1. إعدادات الصفحة الرسمية
+st.set_page_config(page_title="الوجيز في الدفوع القانونية", layout="wide")
 
 # 2. التنسيق الجمالي الرسمي (CSS)
 st.markdown("""
@@ -12,128 +12,98 @@ st.markdown("""
         direction: rtl;
         text-align: right;
     }
-    .defense-header {
-        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    .hero-section {
+        background: #1a2a6c;
         color: white;
-        padding: 35px;
+        padding: 30px;
         border-radius: 15px;
         text-align: center;
-        margin-bottom: 30px;
         border-bottom: 5px solid #d4af37;
     }
-    .defense-card {
-        background: #f9f9f9;
+    .defense-box {
+        background: #ffffff;
         padding: 25px;
-        border-right: 10px solid #1e3799;
+        border: 1px solid #d1d1d1;
+        border-right: 12px solid #b21f1f;
         border-radius: 10px;
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
-    .stButton>button {
-        width: 100%;
-        height: 70px;
-        font-size: 19px;
-        font-weight: bold;
-        background-color: #ffffff;
-        color: #1e3799;
-        border: 2px solid #d4af37;
-        border-radius: 10px;
-    }
-    .stButton>button:hover {
-        background-color: #d4af37;
-        color: white;
-    }
+    .section-title { color: #1e3799; font-weight: bold; margin-top: 10px; border-bottom: 1px solid #eee; }
+    .law-text { color: #b21f1f; font-style: italic; background: #fff5f5; padding: 10px; border-radius: 5px; }
+    .explanation-text { color: #2c3e50; font-weight: bold; background: #f0f2f6; padding: 15px; border-right: 5px solid #27ae60; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. واجهة البرنامج (التوقيع الرسمي)
+# 3. واجهة البرنامج (توقيعك الرسمي)
 st.markdown("""
-    <div class="defense-header">
-        <h1>⚖️ الوجيز في الدفوع القانونية للهيئة</h1>
-        <p style='font-size: 20px; font-weight: bold;'>
+    <div class="hero-section">
+        <h1 style='margin:0;'>⚖️ الوجيز في الدفوع القانونية للهيئة</h1>
+        <p style='font-size: 22px; font-weight: bold; margin-top:10px;'>
             مع تحيات وليد حماد <br>
             الادارة العامة للشؤون القانونية - ديوان عام منطقة البحيرة
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-# 4. قاعدة بيانات الدفوع القانونية
-legal_defenses = [
+# 4. قاعدة بيانات الدفوع (نصوص منضبطة من القانون واللائحة)
+defense_db = [
     {
-        "title": "الدفع بعدم قبول الدعوى لعدم اللجوء للجان الفض",
-        "icon": "🚫",
-        "defense": "ندفع بعدم قبول الدعوى لرفعها بغير الطريق الذي رسمه القانون لعدم اللجوء للجنة فض المنازعات المنصوص عليها بالمادة 148.",
-        "law_article": "148",
-        "law_text": "نصت المادة (148) من القانون رقم 148 لسنة 2019 على: 'تنشأ بالهيئة لجان لفض المنازعات الناشئة عن تطبيق أحكام هذا القانون، وتحدد اللائحة التنفيذية لهذا القانون تشكيلها ونظام عملها... ولا يجوز رفع الدعوى قبل مضي ستين يوماً من تاريخ تقديم الطلب للجنة'.",
-        "reg_text": "مادة (363) من اللائحة التنفيذية: تلتزم الهيئة بإنشاء لجان فنية وقانونية للنظر في التظلمات قبل اللجوء للقضاء.",
-        "tags": ["قبول", "فض منازعات", "إجراءات"]
+        "id": 1,
+        "title": "الدفع بعدم قبول الدعوى لعدم اللجوء للجان فض المنازعات",
+        "defense_statement": "ندفع بعدم قبول الدعوى لرفعها بغير الطريق الذى رسمه القانون لعدم اللجوء إلى لجان فض المنازعات المنصوص عليها بالمادة (148) من القانون 148 لسنة 2019.",
+        "law_article": "المادة (148) من القانون:",
+        "law_content": "تنشأ بالهيئة لجان لفض المنازعات الناشئة عن تطبيق أحكام هذا القانون... ولا يجوز رفع الدعوى قبل مضى ستين يوماً من تاريخ تقديم الطلب للجنة المشار إليها.",
+        "reg_article": "المادة (363) من اللائحة:",
+        "reg_content": "تنشأ لجنة أو أكثر بقرار من رئيس الهيئة لفض المنازعات... ويجب على أصحاب الشأن تقديم طلب تظلم للجنة قبل اللجوء للقضاء.",
+        "commentary": "وترتيباً على ما تقدم؛ ولما كان المدعي قد أقام دعواه الماثلة دون الولوج إلى لجنة فض المنازعات المختصة، الأمر الذي يضحي معه قد خالف إجراءً جوهرياً رسمه القانون، مما يتعين معه على عدالة المحكمة الموقرة القضاء بعدم قبول الدعوى لرفعها بغير الطريق الذي رسمه القانون.",
+        "tags": ["قبول", "فض", "إجراءات"]
     },
     {
+        "id": 2,
         "title": "الدفع بسقوط الحق بالتقادم الخمسي",
-        "icon": "⏳",
-        "defense": "ندفع بسقوط حق المدعي في المطالبة بالمبالغ المتأخرة بالتقادم الخمسي طبقاً للمادة 144.",
-        "law_article": "144",
-        "law_text": "نصت المادة (144) من القانون على: 'يسقط حق الهيئة في مطالبة صاحب العمل أو المؤمن عليه بالمبالغ المستحقة لها بانقضاء خمس سنوات من تاريخ استحقاقها... كما يسقط حق المؤمن عليه أو المستحقين في المطالبة بالمبالغ المستحقة بانقضاء خمس سنوات من تاريخ الاستحقاق'.",
-        "reg_text": "مادة (355) من اللائحة التنفيذية: تحدد إجراءات قطع التقادم عن طريق المطالبة الرسمية أو الكتاب المسجل.",
-        "tags": ["تقادم", "خمس سنوات", "سقوط الحق"]
-    },
-    {
-        "title": "الدفع بعدم توافر شروط المعاش المبكر",
-        "icon": "🛑",
-        "defense": "ندفع برفض الدعوى لعدم توافر مدة الاشتراك الفعلية أو عدم تحقيق نسبة الـ 50% من أجر التسوية الأخير.",
-        "law_article": "21 بند 6",
-        "law_text": "نصت المادة (21) بند 6 على ضرورة 'توافر مدة اشتراك فعلية تعطي الحق في معاش لا يقل عن 50% من أجر أو دخل التسوية الأخير، وبما لا يقل عن الحد الأدنى للمعاش'.",
-        "reg_text": "مادة (102) فقرة (ح) من اللائحة: تشترط وجود مدة اشتراك فعلية لا تقل عن 240 شهراً (ستصبح 300 شهر في 2025).",
-        "tags": ["مبكر", "رفض", "شروط"]
-    },
-    {
-        "title": "الدفع بعدم الاختصاص الولائي",
-        "icon": "🏛️",
-        "defense": "ندفع بعدم اختصاص المحكمة ولائياً بنظر الدعوى لكون النزاع يدخل في اختصاص محاكم القضاء الإداري (مجلس الدولة).",
-        "law_article": "أحكام عامة",
-        "law_text": "وفقاً لقانون مجلس الدولة، تختص محاكم القضاء الإداري بالفصل في المنازعات المتعلقة بالموظفين العموميين والقرارات الإدارية الصادرة من الهيئة باعتبارها سلطة عامة.",
-        "reg_text": "تطبق القواعد العامة للاختصاص القضائي المرتبطة بطبيعة العلاقة الوظيفية (قطاع عام / خاص).",
-        "tags": ["اختصاص", "ولائي", "مجلس الدولة"]
+        "defense_statement": "ندفع بسقوط حق المدعي في المطالبة بالمبالغ المتنازع عليها لمضي أكثر من خمس سنوات (التقادم الخمسي).",
+        "law_article": "المادة (144) من القانون:",
+        "law_content": "يسقط حق المؤمن عليه أو المستحقين في المطالبة بالمبالغ المستحقة بانقضاء خمس سنوات من تاريخ الاستحقاق.",
+        "reg_article": "المادة (355) من اللائحة:",
+        "reg_content": "ينقطع سريان مدة التقادم بالمطالبة بالحق بكتاب مسجل مصحوب بعلم الوصول أو بأي وسيلة من وسائل الإخطار القانونية.",
+        "commentary": "وترتيباً على ما تقدم؛ يتضح لعدالة المحكمة الموقرة أن الحق المطالب به قد انقضى عليه أكثر من خمس سنوات دون وجود عذر قانوني أو مانع يحول دون المطالبة به، ولما كانت نصوص القانون صريحة في تقرير السقوط بالتقادم الخمسي، فإننا نلتمس القضاء بسقوط الحق بالتقادم.",
+        "tags": ["تقادم", "سقوط", "خمس سنوات"]
     }
 ]
 
-# 5. محرك البحث عن الدفوع
-search_query = st.text_input("🔍 ابحث عن دفع قانوني معين (مثلاً: تقادم، فض منازعات، معاش مبكر)...").strip()
+# 5. محرك البحث
+query = st.text_input("🔍 ابحث عن الدفع المناسب لدعواك...")
 
-if search_query:
-    results = [item for item in legal_defenses if search_query in item['title'] or any(tag in search_query for tag in item['tags'])]
-    
-    if results:
-        for res in results:
-            with st.container():
-                st.markdown(f"""
-                    <div class="defense-card">
-                        <h2 style='color: #1e3799;'>{res['icon']} {res['title']}</h2>
-                        <p style='font-size: 20px; color: #b21f1f;'><b>💡 الدفع:</b> {res['defense']}</p>
-                        <hr>
-                        <p style='font-size: 16px;'><b>⚖️ السند القانوني (مادة {res['law_article']}):</b> <br> {res['law_text']}</p>
-                        <p style='font-size: 16px; color: #2c3e50;'><b>📄 سند اللائحة:</b> <br> {res['reg_text']}</p>
-                    </div>
-                """, unsafe_allow_html=True)
-    else:
-        st.warning("لم يتم العثور على هذا الدفع في القاعدة الحالية.")
+# 6. منطق العرض
+def display_defense(item):
+    st.markdown(f"""
+        <div class="defense-box">
+            <h2 style='color: #1a2a6c;'>📌 {item['title']}</h2>
+            <p style='font-size: 20px; color: #b21f1f; font-weight: bold;'>[ نص الدفع ]: {item['defense_statement']}</p>
+            
+            <div class="section-title">⚖️ أولاً: من القانون</div>
+            <p class="law-text"><b>{item['law_article']}</b><br>{item['law_content']}</p>
+            
+            <div class="section-title">📜 ثانياً: من اللائحة التنفيذية</div>
+            <p class="law-text"><b>{item['reg_article']}</b><br>{item['reg_content']}</p>
+            
+            <div class="section-title">🖋️ ثالثاً: التعقيب القانوني (الصياغة)</div>
+            <div class="explanation-text">{item['commentary']}</div>
+        </div>
+    """, unsafe_allow_html=True)
 
+if query:
+    results = [i for i in defense_db if query in i['title'] or any(t in query for t in i['tags'])]
+    for res in results:
+        display_defense(res)
 else:
-    # عرض أيقونات الدفوع الرئيسية
-    st.markdown("### 🏛️ قائمة الدفوع القانونية الجاهزة:")
+    # عرض القائمة كأزرار أيقونية
     cols = st.columns(2)
-    for idx, item in enumerate(legal_defenses):
+    for idx, item in enumerate(defense_db):
         with cols[idx % 2]:
-            if st.button(f"{item['icon']} {item['title']}", key=idx):
-                st.markdown(f"""
-                    <div class="defense-card">
-                        <h3 style='color: #1e3799;'>{item['title']}</h3>
-                        <p style='font-size: 20px; color: #b21f1f;'><b>💡 الدفع:</b> {item['defense']}</p>
-                        <hr>
-                        <p style='font-size: 17px;'><b>⚖️ نص المادة من القانون:</b> <br> {item['law_text']}</p>
-                        <p style='font-size: 17px; color: #2c3e50;'><b>📖 نص المادة من اللائحة:</b> <br> {item['reg_text']}</p>
-                    </div>
-                """, unsafe_allow_html=True)
+            if st.button(f"🔎 {item['title']}"):
+                display_defense(item)
 
 st.markdown("---")
-st.caption("موسوعة الدفوع القانونية - الإصدار الخاص بالشؤون القانونية - البحيرة 2026")
+st.caption("برنامج الدفوع القانونية المطور - نسخة الإدارة القانونية بالبحيرة")
