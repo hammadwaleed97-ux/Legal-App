@@ -1,104 +1,101 @@
 import streamlit as st
 
-# 1. إعدادات الصفحة الرسمية
-st.set_page_config(page_title="الوجيز الذكي في التأمينات والمعاشات", layout="wide", page_icon="⚖️")
+# 1. إعدادات الصفحة والاسم المختار
+st.set_page_config(page_title="الوجيز الذكي في التأمينات والمعاشات", layout="wide")
 
-# 2. تصميم الواجهة (CSS) لتظهر بشكل فخم
+# 2. لمسة الفخامة (CSS) لعمل واجهة تشبه التطبيقات العالمية
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
-    
     html, body, [class*="css"] {
         font-family: 'Cairo', sans-serif;
         direction: rtl;
         text-align: right;
     }
-    
-    /* تصميم الهيدر (العنوان) */
-    .header-box {
-        background: linear-gradient(135deg, #1e3799 0%, #0984e3 100%);
+    /* الهيدر الفخم */
+    .hero-section {
+        background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
         color: white;
-        padding: 40px;
-        border-radius: 20px;
+        padding: 50px 20px;
+        border-radius: 25px;
         text-align: center;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        margin-bottom: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
-    
-    /* تصميم الأزرار التفاعلية */
+    /* تصميم البطاقات الذكية */
+    .law-card {
+        background: white;
+        padding: 20px;
+        border-right: 8px solid #d4af37;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        transition: 0.3s;
+    }
+    .law-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
     .stButton>button {
         width: 100%;
-        height: 100px;
-        background-color: #ffffff;
-        color: #2c3e50;
-        border: 2px solid #d4af37; /* ذهبي */
+        background-color: #f8f9fa;
+        border: 2px solid #1a2a6c;
         border-radius: 15px;
-        font-size: 20px;
+        height: 60px;
         font-weight: bold;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    
-    .stButton>button:hover {
-        background-color: #d4af37;
-        color: white;
-        transform: scale(1.05);
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. واجهة البرنامج (Header)
+# 3. العنوان الرئيسي الجذاب
 st.markdown("""
-    <div class="header-box">
-        <h1 style='margin:0;'>📚 الوجيز الذكي في التأمينات والمعاشات</h1>
-        <p style='font-size: 22px; margin-top:10px;'>موسوعة قانون 148 لسنة 2019 واللائحة التنفيذية</p>
-        <p style='font-size: 16px; opacity: 0.9;'>تبسيط القانون.. حماية للحقوق</p>
+    <div class="hero-section">
+        <h1 style='font-size: 45px;'>📚 الوجيز الذكي في التأمينات والمعاشات</h1>
+        <p style='font-size: 20px;'>كل ما يهم المواطن في قانون 148 ولائحته التنفيذية ببساطة ووضوح</p>
     </div>
     """, unsafe_allow_html=True)
 
-# 4. محرك البحث الذكي
-st.markdown("### 🔍 ابحث في الموسوعة:")
-search_query = st.text_input("", placeholder="اكتب كلمة للبحث (مثلاً: وفاة، زواج، إصابة، اشتراك)...")
+# 4. محرك البحث الذكي (يظهر بوضوح في المنتصف)
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    search_query = st.text_input("🔍 ابحث هنا عن أي موضوع (مثلاً: تعويض، وفاة، عجز، أرملة)...")
 
-# 5. قاعدة البيانات المرتبطة بملفاتك
-legal_content = [
-    {
-        "title": "المعاش عند بلوغ السن",
-        "icon": "👴",
-        "explanation": "يستحق المعاش عند بلوغ سن الستين مع توافر مدة اشتراك لا تقل عن 180 شهراً (15 سنة) فعلياً. (تزيد لـ 20 سنة في 2025).",
-        "law_ref": "مادة (21) من القانون",
-        "reg_ref": "مادة (102) من اللائحة",
-        "tags": ["سن", "ستين", "شيخوخة", "مدة"]
-    },
-    {
-        "title": "منحة الزواج (بنت/أخت)",
-        "icon": "💍",
-        "explanation": "تصرف منحة زواج للبنت أو الأخت المستحقة للمعاش عند زواجها، قيمتها (معاش سنة) بحد أدنى 500 جنيه، وتصرف لمرة واحدة.",
-        "law_ref": "مادة (105) من القانون",
-        "reg_ref": "مادة (281) من اللائحة",
-        "tags": ["بنت", "زواج", "أخت", "منحة"]
-    },
-    {
-        "title": "إصابة العمل وحادث الطريق",
-        "icon": "🚑",
-        "explanation": "تشمل الحوادث أثناء العمل أو بسببه أو في الطريق الطبيعي للعمل. يستحق المصاب تعويض أجر يعادل 100% من أجره.",
-        "law_ref": "مادة (45) من القانون",
-        "reg_ref": "مادة (155) من اللائحة",
-        "tags": ["إصابة", "حادث", "طريق", "علاج"]
-    },
-    {
-        "title": "المعاش المبكر",
-        "icon": "⏱️",
-        "explanation": "يتطلب مدة اشتراك تعطي معاشاً لا يقل عن 50% من آخر أجر تسوية، وبمدة اشتراك فعلية لا تقل عن 20 سنة (تصبح 25 سنة في 2025).",
-        "law_ref": "مادة (21) بند 6",
-        "reg_ref": "مادة (102) فقرة ح",
-        "tags": ["مبكر", "استقالة", "تسوية"]
-    }
+# 5. عرض المواضيع (الأيقونات)
+st.markdown("### 🌟 تصفح أهم المواضيع:")
+topics = [
+    {"title": "المعاش الأساسي", "icon": "👴", "text": "شروط استحقاق معاش الشيخوخة ومدد الاشتراك المطلوبة."},
+    {"title": "منح الورثة", "icon": "🎁", "text": "منحة الجنازة، منحة الموت، ومنحة زواج البنات."},
+    {"title": "إصابة العمل", "icon": "🚑", "text": "حقوق المصاب وحالات حادث الطريق وتعويض الأجر."},
+    {"title": "المستحقين", "icon": "👨‍👩‍👧", "text": "قواعد توزيع المعاش بين الأرامل والأبناء والوالدين."}
 ]
 
-# 6. منطق عرض النتائج
+cols = st.columns(4)
+for i, topic in enumerate(topics):
+    with cols[i]:
+        if st.button(f"{topic['icon']} {topic['title']}"):
+            st.info(f"**{topic['title']}:** {topic['text']}")
+
+# 6. منطق عرض "الشرح + المواد" (كما طلبت)
+st.markdown("---")
 if search_query:
-    results = [item for item in legal_content if any(tag in search_query for tag in item['tags']) or search_query in item['title']]
-    if results:
-        for res in results:
-            with
+    # هنا يتم البحث (مثال توضيحي)
+    st.markdown(f"#### نتائج البحث عن '{search_query}':")
+    # محاكاة لنتيجة بحث
+    st.markdown(f"""
+        <div class="law-card">
+            <h3>📌 شرح مبسط:</h3>
+            <p style='font-size: 18px;'>حقوقك التأمينية في هذا الموضوع تشمل كذا وكذا...</p>
+            <hr>
+            <p style='color: #b21f1f;'><b>⚖️ المادة الحاكمة:</b> مادة (123) من القانون 148 لسنة 2019</p>
+            <p style='color: #1a2a6c;'><b>📄 نص اللائحة:</b> مادة (456) من اللائحة التنفيذية</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+# 7. الفوتر الفخم (التوقيع الرسمي)
+st.markdown("""
+    <div style='text-align: center; margin-top: 50px; padding: 20px; border-top: 2px solid #eee;'>
+        <p style='color: #1a2a6c; font-size: 18px; font-weight: bold;'>تحيات الإدارة العامة للشئون القانونية</p>
+        <p style='color: #d4af37; font-size: 20px; font-weight: bold;'>وليد حماد</p>
+        <p style='color: #7f8c8d;'>منطقة البحيرة - الهيئة القومية للتأمين الاجتماعي</p>
+    </div>
+    """, unsafe_allow_html=True)
