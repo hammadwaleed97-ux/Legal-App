@@ -4,18 +4,29 @@ import pandas as pd
 from datetime import datetime, timedelta
 from docx import Document
 from docx.shared import Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
 import io
 
-# --- 1. الإعدادات ---
-st.set_page_config(page_title="نظام الإدارة القانونية", layout="wide")
+# --- 1. إعدادات الصفحة ---
+st.set_page_config(page_title="نظام الإدارة القانونية المطور", layout="wide")
 
-# --- 2. قاعدة البيانات ---
+def set_table_rtl(table):
+    tblPr = table._element.xpath('w:tblPr')[0]
+    bidi = OxmlElement('w:bidi')
+    bidi.set(qn('w:val'), '1')
+    tblPr.append(bidi)
+
+# --- 2. قاعدة البيانات (هيكلة شاملة) ---
 def init_db():
-    conn = sqlite3.connect('legal_final.db', check_same_thread=False)
+    conn = sqlite3.connect('legal_pro_v1.db', check_same_thread=False)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS cases 
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT, case_no TEXT, year TEXT, 
-                  court TEXT, lawyer TEXT, appeal_date DATE)''')
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                  type TEXT, case_no TEXT, year TEXT, court TEXT, 
+                  plaintiff TEXT, defendant TEXT, subject TEXT, 
+                  lawyer TEXT, last_action TEXT, appeal_deadline DATE)''')
     c.execute('''CREATE TABLE IF NOT EXISTS sessions 
                  (id INTEGER PRIMARY KEY AUTOINCREMENT, case_id INTEGER, 
                   session_date DATE, decision TEXT)''')
@@ -24,104 +35,96 @@ def init_db():
 
 conn = init_db()
 
-# --- 3. الواجهة ---
-st.markdown("<h1 style='text-align:center;'>⚖️ الإدارة القانونية - منطقة البحيرة</h1>", unsafe_allow_html=True)
+# --- 3. تصميم الواجهة ---
+st.markdown("<h2 style='text-align: center; color: #1e3a8a;'>⚖️ الإدارة العامة للشئون القانونية - منطقة البحيرة</h2>", unsafe_allow_html=True)
 
-if 'pg' not in st.session_state: st.session_state.pg = 'home'
+if 'page' not in st.session_state: st.session_state.page = 'dashboard'
 
-# أزرار التنقل
-c1, c2, c3, c4 = st.columns(4)
-if c1.button("🏠 التنبيهات والملخص"): st.session_state.pg = 'home'
-if c2.button("➕ إضافة قضية"): st.session_state.pg = 'add'
-if c3.button("📅 الجلسات والتعديل"): st.session_state.pg = 'sess'
-if c4.button("📄 التقرير الرسمي"): st.session_state.pg = 'rep'
+# أزرار التنقل الأساسية
+m1, m2, m3, m4 = st.columns(4)
+if m1.button("🔔 التنبيهات والملخص"): st.session_state.page = 'dashboard'
+if m2.button("➕ إضافة (دعوى/طعن)"): st.session_state.page = 'add'
+if m3.button("📅 الجلسات والتعديل"): st.session_state.page = 'sessions'
+if m4.button("📄 التقارير الرسمية"): st.session_state.page = 'reports'
 
-st.divider()
+# --- 4. الصفحات ---
 
-# --- الصفحة الرئيسية (التنبيهات) ---
-if st.session_state.pg == 'home':
-    st.subheader("🔔 التنبيهات العاجلة")
+if st.session_state.page == 'dashboard':
+    st.subheader("📢 لوحة التنبيهات العاجلة")
     today = datetime.now().date()
     
-    # تنبيهات الجلسات (أسبوع)
-    next_week = today + timedelta(days=7)
-    s_alert = pd.read_sql(f"SELECT c.case_no, s.session_date FROM sessions s JOIN cases c ON s.case_id = c.id WHERE s.session_date BETWEEN '{today}' AND '{next_week}'", conn)
-    if not s_alert.empty:
-        for _, r in s_alert.iterrows():
-            st.warning(f"🗓️ جلسة قادمة: قضية {r['case_no']} بتاريخ {r['session_date']}")
-            
-    # تنبيهات الطعون (10 أيام)
-    a_alert = pd.read_sql(f"SELECT case_no, appeal_date FROM cases WHERE appeal_date BETWEEN '{today}' AND '{(today + timedelta(days=10))}'", conn)
-    if not a_alert.empty:
-        for _, r in a_alert.iterrows():
-            st.error(f"🚨 ميعاد طعن وشيك: قضية {r['case_no']} يوم {r['appeal_date']}")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.info("🗓️ جلسات خلال 7 أيام")
+        df_s = pd.read_sql(f"SELECT c.case_no, s.session_date FROM sessions s JOIN cases c ON s.case_id = c.id WHERE s.session_date BETWEEN '{today}' AND '{(today + timedelta(days=7))}'", conn)
+        if not df_s.empty: st.warning(f"لديك {len(df_s)} جلسات قادمة")
+        else: st.write("لا يوجد")
+
+    with col_b:
+        st.error("🚨 طعون أوشكت على الانتهاء")
+        df_a = pd.read_sql(f"SELECT case_no, appeal_deadline FROM cases WHERE appeal_deadline BETWEEN '{today}' AND '{(today + timedelta(days=10))}'", conn)
+        if not df_a.empty: st.error(f"تحذير: {len(df_a)} طعون تنتهي قريباً")
+        else: st.write("لا يوجد")
 
     st.divider()
-    st.subheader("📊 القضايا المسجلة (حذف)")
-    all_c = pd.read_sql("SELECT * FROM cases", conn)
-    for _, r in all_c.iterrows():
-        col1, col2 = st.columns([5, 1])
-        col1.write(f"📂 {r['case_no']} / {r['year']} - {r['court']} ({r['lawyer']})")
-        if col2.button("🗑️", key=f"del_{r['id']}"):
-            conn.execute(f"DELETE FROM cases WHERE id={r['id']}")
+    st.subheader("📋 كافة القضايا")
+    df_all = pd.read_sql("SELECT id, type as 'النوع', case_no as 'الرقم', year as 'السنة', subject as 'الموضوع', last_action as 'آخر إجراء' FROM cases", conn)
+    st.dataframe(df_all, use_container_width=True)
+    if st.button("🗑️ مسح قضية محددة"):
+        id_to_del = st.number_input("أدخل ID القضية للمسح", step=1)
+        if st.button("تأكيد الحذف"):
+            conn.execute(f"DELETE FROM cases WHERE id={id_to_del}")
             conn.commit()
             st.rerun()
 
-# --- إضافة قضية ---
-elif st.session_state.pg == 'add':
-    with st.form("add"):
-        no = st.text_input("رقم الدعوى")
-        yr = st.text_input("السنة")
-        ct = st.text_input("المحكمة")
-        law = st.text_input("المحامي")
-        ap = st.date_input("آخر ميعاد للطعن", value=None)
-        if st.form_submit_button("حفظ"):
-            conn.execute("INSERT INTO cases (case_no, year, court, lawyer, appeal_date) VALUES (?,?,?,?,?)", (no, yr, ct, law, ap))
-            conn.commit()
-            st.success("تم الحفظ")
-
-# --- الجلسات والتعديل ---
-elif st.session_state.pg == 'sess':
-    st.subheader("📅 إدارة الجلسات والقرارات")
-    c_list = pd.read_sql("SELECT id, case_no FROM cases", conn)
-    if not c_list.empty:
-        cid = st.selectbox("اختر القضية", c_list['id'], format_func=lambda x: f"رقم {c_list[c_list['id']==x]['case_no'].values[0]}")
+elif st.session_state.page == 'add':
+    with st.form("add_form"):
+        st.subheader("📝 تسجيل بيانات جديدة")
+        c_type = st.selectbox("النوع", ["دعوى", "طعن"])
+        c1, c2 = st.columns(2)
+        no = c1.text_input("رقم القضية")
+        yr = c2.text_input("السنة")
+        court = st.text_input("المحكمة / الدائرة")
+        p_name = st.text_input("المدعي")
+        d_name = st.text_input("المدعى عليه")
+        subj = st.text_area("موضوع الدعوى")
+        lawyer = st.text_input("المحامي المختص")
+        last = st.text_input("آخر إجراء")
+        deadline = st.date_input("ميعاد الطعن", value=None)
         
-        # إضافة قرار
-        with st.expander("➕ إضافة قرار"):
-            sd = st.date_input("التاريخ")
-            dec = st.text_area("القرار")
-            if st.button("حفظ القرار"):
-                conn.execute("INSERT INTO sessions (case_id, session_date, decision) VALUES (?,?,?)", (int(cid), sd, dec))
-                conn.commit()
-                st.success("تم")
+        if st.form_submit_button("حفظ بالنظام"):
+            conn.execute("INSERT INTO cases (type, case_no, year, court, plaintiff, defendant, subject, lawyer, last_action, appeal_deadline) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                         (c_type, no, yr, court, p_name, d_name, subj, lawyer, last, deadline))
+            conn.commit()
+            st.success("تم الحفظ بنجاح")
 
-        # عرض وتعديل القرارات
-        st.write("📜 القرارات السابقة:")
-        h = pd.read_sql(f"SELECT * FROM sessions WHERE case_id={cid}", conn)
-        for _, row in h.iterrows():
-            col_d, col_t, col_b = st.columns([2, 5, 1])
-            col_d.write(row['session_date'])
-            new_val = col_t.text_area("القرار", value=row['decision'], key=f"val_{row['id']}")
-            if col_t.button("💾 حفظ التعديل", key=f"sv_{row['id']}"):
-                conn.execute("UPDATE sessions SET decision=? WHERE id=?", (new_val, row['id']))
-                conn.commit()
-                st.success("تم التعديل")
-            if col_b.button("🗑️", key=f"sd_{row['id']}"):
-                conn.execute(f"DELETE FROM sessions WHERE id={row['id']}")
+elif st.session_state.page == 'sessions':
+    st.subheader("📅 إدارة الجلسات وتعديل القرارات")
+    case_list = pd.read_sql("SELECT id, case_no, year FROM cases", conn)
+    if not case_list.empty:
+        cid = st.selectbox("اختر القضية", case_list['id'], format_func=lambda x: f"قضية {case_list[case_list['id']==x]['case_no'].values[0]}")
+        
+        with st.expander("📝 إضافة قرار جلسة"):
+            dt = st.date_input("تاريخ الجلسة")
+            dec = st.text_area("القرار")
+            if st.button("حفظ"):
+                conn.execute("INSERT INTO sessions (case_id, session_date, decision) VALUES (?,?,?)", (int(cid), dt, dec))
                 conn.commit()
                 st.rerun()
 
-# --- التقرير ---
-elif st.session_state.pg == 'rep':
-    if st.button("📥 تحميل التقرير (Word)"):
-        df = pd.read_sql("SELECT * FROM cases", conn)
-        doc = Document()
-        doc.add_heading('الهيئة القومية للتأمين الاجتماعي - البحيرة', 0)
-        doc.add_heading('بيان القضايا والطعون المتداولة', 2)
-        for _, r in df.iterrows():
-            doc.add_paragraph(f"قضية رقم: {r['case_no']} لعام {r['year']} - محكمة: {r['court']} - محامي: {r['lawyer']}")
-        
-        buf = io.BytesIO()
-        doc.save(buf)
-        st.download_button("تحميل الملف", buf.getvalue(), "report.docx")
+        st.write("🔄 القرارات السابقة (يمكنك تعديل النص مباشرة):")
+        h = pd.read_sql(f"SELECT * FROM sessions WHERE case_id={cid}", conn)
+        for _, r in h.iterrows():
+            new_val = st.text_area(f"قرار جلسة {r['session_date']}", value=r['decision'], key=f"s_{r['id']}")
+            c1, c2 = st.columns(2)
+            if c1.button("💾 حفظ التعديل", key=f"b_{r['id']}"):
+                conn.execute("UPDATE sessions SET decision=? WHERE id=?", (new_val, r['id']))
+                conn.commit()
+                st.success("تم التعديل")
+            if c2.button("🗑️ حذف", key=f"d_{r['id']}"):
+                conn.execute(f"DELETE FROM sessions WHERE id={r['id']}")
+                conn.commit()
+                st.rerun()
+
+elif st.session_state.page == 'reports':
+    st.subheader("
