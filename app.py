@@ -1,90 +1,69 @@
 import streamlit as st
+import pandas as pd
+from datetime import datetime, timedelta
 
-# 1. إعدادات الصفحة
-st.set_page_config(page_title="موسوعة الدفوع القانونية - البحيرة", layout="wide")
+# إعداد الصفحة وتنسيقها
+st.set_page_config(page_title="المكتب الفني - الإدارة القانونية", layout="wide")
 
-# 2. التنسيق الرسمي الصارم (CSS)
+# تخصيص الواجهة باللغة العربية
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
-    html, body, [class*="css"] {
-        font-family: 'Cairo', sans-serif; direction: rtl; text-align: right;
-    }
-    .header-box {
-        background: #0d1b2a; color: white; padding: 25px; border-radius: 10px;
-        text-align: center; border-bottom: 5px solid #d4af37; margin-bottom: 20px;
-    }
-    .defense-card {
-        background: #ffffff; padding: 20px; border-right: 10px solid #b21f1f;
-        border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-bottom: 25px;
-    }
-    .law-section { background: #fff5f5; padding: 12px; border-radius: 5px; color: #b21f1f; font-weight: bold; margin: 10px 0; border: 1px solid #ffcccc; }
-    .reg-section { background: #f0f7ff; padding: 12px; border-radius: 5px; color: #1e3799; font-weight: bold; margin: 10px 0; border: 1px solid #cce5ff; }
-    .judicial-logic { background: #e9ecef; padding: 20px; border-right: 6px solid #27ae60; font-weight: bold; font-size: 18px; margin-top: 15px; line-height: 1.6; }
+    .reportview-container { direction: rtl; }
+    .main { text-align: right; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. الهيدر (توقيعك الرسمي)
-st.markdown("""
-    <div class="header-box">
-        <h1 style='margin:0;'>⚖️ موسوعة الدفوع القانونية للهيئة القومية للتأمين الاجتماعي</h1>
-        <p style='font-size: 20px; margin-top:10px;'>مع تحيات وليد حماد - الادارة العامة للشؤون القانونية - ديوان عام منطقة البحيرة</p>
-    </div>
-    """, unsafe_allow_html=True)
+st.title("⚖️ منظومة الإدارة العامة للشؤون القانونية")
+st.subheader("ديوان عام منطقة البحيرة")
 
-# 4. قاعدة البيانات (كافة الدفوع بنصوص حرفية 100%)
-defenses_list = [
-    {
-        "title": "الدفع بعدم قبول الدعوى لعدم اللجوء للجان فض المنازعات",
-        "statement": "ندفع بعدم قبول الدعوى لرفعها بغير الطريق الذى رسمه القانون لعدم اللجوء إلى لجان فض المنازعات المنصوص عليها بالمادة (148) من القانون 148 لسنة 2019.",
-        "law_text": "نصت المادة (148) من القانون رقم 148 لسنة 2019 على: 'تنشأ بالهيئة لجان لفض المنازعات الناشئة عن تطبيق أحكام هذا القانون... ولا يجوز رفع الدعوى قبل مضى ستين يوماً من تاريخ تقديم الطلب للجنة المشار إليها'.",
-        "reg_text": "نصت المادة (363) من اللائحة التنفيذية على: 'تنشأ لجنة أو أكثر بقرار من رئيس الهيئة لفض المنازعات... ويجب على أصحاب الشأن تقديم طلب تظلم للجنة قبل اللجوء للقضاء'.",
-        "logic": "وترتيباً على ما تقدم؛ ولما كان الثابت يقيناً من أوراق الدعوى أن المدعي قد أقام دعواه الماثلة بطلب (تذكر الطلبات) دون أن يلجأ إلى طريق التظلم الوجوبي أمام لجان فض المنازعات المختصة، الأمر الذي يكون معه قد خالف إجراءً جوهرياً متعلقاً بالنظام العام رسمه القانون، ويتعين معه على عدالة المحكمة الموقرة القضاء بعدم قبول الدعوى لرفعها بغير الطريق الذي رسمه القانون."
-    },
-    {
-        "title": "الدفع بسقوط الحق بالتقادم الخمسي",
-        "statement": "ندفع بسقوط حق المدعي في المطالبة بالمبالغ المتأخرة بالتقادم الخمسي طبقاً للمادة (144) من القانون 148 لسنة 2019.",
-        "law_text": "نصت المادة (144) من القانون على: 'يسقط حق المؤمن عليه أو المستحقين في المطالبة بالمبالغ المستحقة بانقضاء خمس سنوات من تاريخ الاستحقاق'.",
-        "reg_text": "نصت المادة (355) من اللائحة التنفيذية على: 'ينقطع سريان مدة التقادم بالمطالبة بالحق بكتاب مسجل مصحوب بعلم الوصول أو بأي وسيلة من وسائل الإخطار القانونية'.",
-        "logic": "وترتيباً على ما تقدم؛ يتضح لعدالة المحكمة الموقرة أن المطالبة القضائية الماثلة قد انصبت على مبالغ استحقاقها يرجع لأكثر من خمس سنوات سابقة على تاريخ رفع الدعوى، ولما كانت نصوص القانون واللائحة قد قررت سقوط الحق في المطالبة بانقضاء خمس سنوات، فإننا نلتمس القضاء بسقوط حق المدعي في المطالبة بالتقادم الخمسي."
-    },
-    {
-        "title": "الدفع بعدم قبول الدعوى لرفعها على غير ذي صفة",
-        "statement": "ندفع بعدم قبول الدعوى لرفعها على غير ذي صفة بالنسبة للمدعى عليه (تحدد الجهة) لكون الهيئة لها شخصية اعتبارية مستقلة.",
-        "law_text": "نصت المادة (8) من القانون 148 لسنة 2019 على: 'يمثل الهيئة القومية للتأمين الاجتماعي رئيس مجلس إدارتها أمام القضاء وفى صلاتها بالغير'.",
-        "reg_text": "تطبق القواعد العامة في قانون المرافعات بشأن الصفة، حيث أن تمثيل الهيئة قانوناً معقود حصراً للسيد رئيس مجلس إدارة الهيئة بصفته.",
-        "logic": "وترتيباً على ما تقدم؛ ولما كان المدعي قد وجه خصومته في الدعوى الماثلة لغير ذي صفة قانوناً في تمثيل الهيئة، الأمر الذي تضحي معه الدعوى مقامة على غير ذي صفة، مما نلتمس معه القضاء بعدم قبول الدعوى."
-    },
-    {
-        "title": "الدفع بعدم الاختصاص المحلي (مقر الهيئة)",
-        "statement": "ندفع بعدم اختصاص المحكمة محلياً بنظر الدعوى وانعقاد الاختصاص لمحكمة (تذكر المحكمة) التي يقع في دائرتها مقر الهيئة أو مكتب التأمينات المختص.",
-        "law_text": "تنص القواعد العامة في قانون المرافعات (المادة 42 وما بعدها) على أن الاختصاص المحلي ينعقد للمحكمة التي يقع في دائرتها موطن المدعى عليه.",
-        "reg_text": "توزع الاختصاصات الجغرافية لمكاتب التأمينات طبقاً لقرار رئيس الهيئة المنظم للاختصاص المكاني للمكاتب والمناطق.",
-        "logic": "وترتيباً على ما تقدم؛ ولما كان مقر جهة الإدارة (الهيئة) التي يخاصمها المدعي يقع خارج الاختصاص المحلي لهذه المحكمة الموقرة، فإننا نلتمس القضاء بعدم اختصاص المحكمة محلياً وإحالتها للمحكمة المختصة."
-    }
-]
+# إنشاء قاعدة بيانات بسيطة في الذاكرة (للتجربة)
+if 'legal_db' not in st.session_state:
+    st.session_state.legal_db = pd.DataFrame(columns=[
+        "رقم الطلب", "تاريخ الورود", "موضوع الطلب", "صاحب الشأن", "الموظف المختص", "الحالة", "موعد الرد القانوني"
+    ])
 
-# 5. محرك البحث الشامل
-search = st.text_input("🔍 ابحث في كافة الدفوع (اكتب: فض، تقادم، صفة، مادة 148)...").strip()
+# القائمة الجانبية للتنقل
+menu = ["تسجيل طلب جديد", "لوحة المتابعة", "الأرشيف القانوني"]
+choice = st.sidebar.selectbox("القائمة الرئيسية", menu)
 
-# 6. منطق العرض
-results = [d for d in defenses_list if search in d['title'] or search in d['statement']] if search else defenses_list
-
-st.info(f"عدد الدفوع القانونية الجاهزة حالياً: {len(results)}")
-
-for res in results:
-    with st.expander(f"⚖️ {res['title']}", expanded=True):
-        st.markdown(f"### [ صيغة الدفع ]")
-        st.error(res['statement'])
+if choice == "تسجيل طلب جديد":
+    st.header("📝 إدخال معاملة قانونية جديدة")
+    with st.form("legal_form"):
+        col1, col2 = st.columns(2)
+        with col1:
+            req_id = st.text_input("رقم الوارد / القضية")
+            subject = st.text_area("موضوع الطلب أو التظلم")
+        with col2:
+            person = st.text_input("اسم صاحب الشأن")
+            lawyer = st.selectbox("الباحث القانوني المختص", ["أحمد علي", "سارة محمد", "خالد محمود"])
+            days_limit = st.number_input("المدة القانونية للرد (أيام)", value=15)
         
-        st.markdown("<div class='law-section'>📌 نص المادة من القانون</div>", unsafe_allow_html=True)
-        st.write(res['law_text'])
+        submitted = st.form_submit_button("حفظ الطلب")
         
-        st.markdown("<div class='reg-section'>📜 نص المادة من اللائحة</div>", unsafe_allow_html=True)
-        st.write(res['reg_text'])
-        
-        st.markdown("<div class='judicial-logic'>🖋️ التعقيب القانوني (للنسخ في المذكرة)</div>", unsafe_allow_html=True)
-        st.write(res['logic'])
+        if submitted:
+            due_date = datetime.now() + timedelta(days=days_limit)
+            new_data = {
+                "رقم الطلب": req_id,
+                "تاريخ الورود": datetime.now().strftime("%Y-%m-%d"),
+                "موضوع الطلب": subject,
+                "صاحب الشأن": person,
+                "الموظف المختص": lawyer,
+                "الحالة": "قيد الدراسة",
+                "موعد الرد القانوني": due_date.strftime("%Y-%m-%d")
+            }
+            st.session_state.legal_db = pd.concat([st.session_state.legal_db, pd.DataFrame([new_data])], ignore_index=True)
+            st.success("تم تسجيل المعاملة وتحديد موعد الرد التلقائي.")
 
-st.markdown("---")
-st.caption("برنامج الدفوع القانونية الشامل - نسخة الإدارة القانونية بالبحيرة - 2026")
+elif choice == "لوحة المتابعة":
+    st.header("📊 متابعة القضايا والطلبات")
+    
+    # إحصائيات سريعة
+    total = len(st.session_state.legal_db)
+    st.metric("إجمالي المعاملات قيد الدراسة", total)
+    
+    # عرض البيانات مع إمكانية التصفية
+    st.dataframe(st.session_state.legal_idb, use_container_width=True)
+
+# تذييل الصفحة بالاسم المطلوب
+st.divider()
+st.markdown("**مع تحيات وليد حماد - الإدارة العامة للشؤون القانونية - ديوان عام منطقة البحيرة**")
