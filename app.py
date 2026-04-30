@@ -4,11 +4,40 @@ import pandas as pd
 from datetime import datetime
 
 # --- إعدادات الصفحة ---
-st.set_page_config(page_title="نظام الإدارة القانونية", layout="wide")
+st.set_page_config(page_title="نظام الإدارة القانونية", layout="wide", initial_sidebar_state="collapsed")
+
+# تطبيق تنسيق CSS لجعل الأزرار تبدو كقائمة احترافية ومحاذاة النصوص
+st.markdown("""
+    <style>
+    div.row-widget.stButton > button {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid #4CAF50;
+        color: #4CAF50;
+        background-color: white;
+        transition: all 0.3s ease;
+    }
+    div.row-widget.stButton > button:hover {
+        background-color: #4CAF50;
+        color: white;
+    }
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    .reportview-container .main .block-container{
+        padding-top: 1rem;
+    }
+    /* تحسين محاذاة النص العربي */
+    body, p, div, h1, h2, h3, h4, h5, h6 {
+        direction: rtl;
+        text-align: right;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # --- إدارة قاعدة البيانات ---
 def init_db():
     conn = sqlite3.connect('legal_management.db', check_same_thread=False)
+    conn.execute("PRAGMA foreign_keys = ON") # تفعيل حظر حذف الأب في حال وجود أبناء
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS cases 
                  (id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -17,79 +46,41 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS sessions 
                  (id INTEGER PRIMARY KEY AUTOINCREMENT, 
                   case_id INTEGER, session_date DATE, requirements TEXT, decision TEXT,
-                  FOREIGN KEY(case_id) REFERENCES cases(id))''')
+                  FOREIGN KEY(case_id) REFERENCES cases(id) ON DELETE CASCADE)''') # الحذف المتتالي للجلسات عند حذف القضية
     conn.commit()
     return conn
 
 conn = init_db()
 c = conn.cursor()
 
-# --- واجهة البرنامج ---
-st.sidebar.title("⚖️ القائمة الرئيسية")
-menu = ["🏠 لوحة التحكم", "➕ إضافة قضية جديدة", "📅 إدارة الجلسات", "🔍 بحث وتقارير"]
-choice = st.sidebar.radio("انتقل إلى:", menu)
+# --- إدارة الحالة (Navigation) ---
+if 'menu_option' not in st.session_state:
+    st.session_state['menu_option'] = 'dashboard'
+
+# --- القائمة الرئيسية في الأعلى ---
+st.write("---")
+col_title, col1, col2, col3, col4 = st.columns([2, 1, 1, 1, 1])
+
+with col_title:
+    st.markdown("### ⚖️ القائمة الرئيسية")
+
+with col1:
+    if st.button("🏠 لوحة التحكم"):
+        st.session_state['menu_option'] = 'dashboard'
+with col2:
+    if st.button("➕ إضافة قضية"):
+        st.session_state['menu_option'] = 'add_case'
+with col3:
+    if st.button("📅 إدارة الجلسات"):
+        st.session_state['menu_option'] = 'manage_sessions'
+with col4:
+    if st.button("🔍 بحث وإدارة"):
+        st.session_state['menu_option'] = 'search_and_manage'
+st.write("---")
+
+
+# --- التنفيذ بناءً على الخيار المحدد ---
 
 # --- 1. لوحة التحكم ---
-if choice == "🏠 لوحة التحكم":
-    st.title("📊 ملخص الإدارة القانونية")
-    col1, col2 = st.columns(2)
-    
-    total_cases = pd.read_sql_query("SELECT COUNT(*) FROM cases", conn).iloc[0,0]
-    col1.metric("إجمالي القضايا", total_cases)
-    
-    st.subheader("🗓️ أحدث الجلسات")
-    query = "SELECT cases.case_no, sessions.session_date, sessions.decision FROM sessions JOIN cases ON cases.id = sessions.case_id ORDER BY sessions.id DESC LIMIT 5"
-    latest_sessions = pd.read_sql_query(query, conn)
-    st.table(latest_sessions)
-
-# --- 2. إضافة قضية جديدة ---
-elif choice == "➕ إضافة قضية جديدة":
-    st.title("📝 تسجيل قضية")
-    with st.form("case_form"):
-        col1, col2 = st.columns(2)
-        with col1:
-            case_no = st.text_input("رقم القضية")
-            year = st.text_input("السنة")
-            court = st.text_input("المحكمة")
-        with col2:
-            opponent = st.text_input("اسم الخصم")
-            case_type = st.selectbox("النوع", ["إداري", "مدني", "عمالي", "تأديب"])
-            status = st.selectbox("الحالة", ["متداولة", "محجوزة", "منتهية"])
-        
-        subject = st.text_area("الموضوع")
-        if st.form_submit_button("حفظ"):
-            c.execute("INSERT INTO cases (case_no, year, court, opponent, case_type, subject, status) VALUES (?,?,?,?,?,?,?)", 
-                      (case_no, year, court, opponent, case_type, subject, status))
-            conn.commit()
-            st.success("تم الحفظ")
-
-# --- 3. إدارة الجلسات ---
-elif choice == "📅 إدارة الجلسات":
-    st.title("📅 الجلسات")
-    cases_df = pd.read_sql_query("SELECT id, case_no FROM cases", conn)
-    if not cases_df.empty:
-        case_id = st.selectbox("اختر القضية", cases_df['id'], format_func=lambda x: cases_df[cases_df['id']==x]['case_no'].values[0])
-        
-        with st.expander("➕ إضافة جلسة"):
-            s_date = st.date_input("تاريخ الجلسة")
-            s_req = st.text_input("المطلوب")
-            s_dec = st.text_area("القرار")
-            if st.button("حفظ الجلسة"):
-                c.execute("INSERT INTO sessions (case_id, session_date, requirements, decision) VALUES (?,?,?,?)", (int(case_id), s_date, s_req, s_dec))
-                conn.commit()
-                st.info("تمت الإضافة")
-        
-        # تم تصحيح السطر الذي سبب المشكلة هنا
-        history_query = f"SELECT session_date, requirements, decision FROM sessions WHERE case_id = {int(case_id)} ORDER BY session_date DESC"
-        history = pd.read_sql_query(history_query, conn)
-        st.dataframe(history)
-
-# --- 4. البحث ---
-elif choice == "🔍 بحث وتقارير":
-    st.title("🔍 البحث")
-    search = st.text_input("رقم القضية أو الخصم")
-    if search:
-        res = pd.read_sql_query(f"SELECT * FROM cases WHERE case_no LIKE '%{search}%' OR opponent LIKE '%{search}%'", conn)
-    else:
-        res = pd.read_sql_query("SELECT * FROM cases", conn)
-    st.dataframe(res)
+if st.session_state['menu_option'] == 'dashboard':
+    st
