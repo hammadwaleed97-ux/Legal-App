@@ -1,69 +1,110 @@
 import streamlit as st
+import sqlite3
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 
-# إعداد الصفحة وتنسيقها
-st.set_page_config(page_title="المكتب الفني - الإدارة القانونية", layout="wide")
+# --- إعدادات الصفحة ---
+st.set_page_config(page_title="نظام الإدارة القانونية", layout="wide", initial_sidebar_state="expanded")
 
-# تخصيص الواجهة باللغة العربية
-st.markdown("""
-    <style>
-    .reportview-container { direction: rtl; }
-    .main { text-align: right; }
-    </style>
-    """, unsafe_allow_html=True)
+# --- إدارة قاعدة البيانات ---
+def init_db():
+    conn = sqlite3.connect('legal_management.db')
+    c = conn.cursor()
+    # جدول القضايا الأساسي
+    c.execute('''CREATE TABLE IF NOT EXISTS cases 
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                  case_no TEXT, 
+                  year TEXT,
+                  court TEXT, 
+                  opponent TEXT, 
+                  case_type TEXT, 
+                  subject TEXT,
+                  status TEXT)''')
+    # جدول الجلسات
+    c.execute('''CREATE TABLE IF NOT EXISTS sessions 
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                  case_id INTEGER, 
+                  session_date DATE, 
+                  requirements TEXT, 
+                  decision TEXT,
+                  FOREIGN KEY(case_id) REFERENCES cases(id))''')
+    conn.commit()
+    return conn
 
-st.title("⚖️ منظومة الإدارة العامة للشؤون القانونية")
-st.subheader("ديوان عام منطقة البحيرة")
+conn = init_db()
+c = conn.cursor()
 
-# إنشاء قاعدة بيانات بسيطة في الذاكرة (للتجربة)
-if 'legal_db' not in st.session_state:
-    st.session_state.legal_db = pd.DataFrame(columns=[
-        "رقم الطلب", "تاريخ الورود", "موضوع الطلب", "صاحب الشأن", "الموظف المختص", "الحالة", "موعد الرد القانوني"
-    ])
+# --- واجهة البرنامج ---
+st.sidebar.title("⚖️ القائمة الرئيسية")
+menu = ["🏠 لوحة التحكم", "➕ إضافة قضية جديدة", "📅 إدارة الجلسات", "🔍 بحث وتقارير"]
+choice = st.sidebar.radio("انتقل إلى:", menu)
 
-# القائمة الجانبية للتنقل
-menu = ["تسجيل طلب جديد", "لوحة المتابعة", "الأرشيف القانوني"]
-choice = st.sidebar.selectbox("القائمة الرئيسية", menu)
+# --- 1. لوحة التحكم ---
+if choice == "🏠 لوحة التحكم":
+    st.title("📊 ملخص الإدارة القانونية")
+    
+    col1, col2, col3 = st.columns(3)
+    total_cases = pd.read_sql_query("SELECT COUNT(*) FROM cases", conn).iloc[0,0]
+    upcoming_sessions = pd.read_sql_query(f"SELECT COUNT(*) FROM sessions WHERE session_date >= '{datetime.now().date()}'", conn).iloc[0,0]
+    
+    col1.metric("إجمالي القضايا", total_cases)
+    col2.metric("جلسات قادمة", upcoming_sessions)
+    col3.metric("الحالة", "متصل")
 
-if choice == "تسجيل طلب جديد":
-    st.header("📝 إدخال معاملة قانونية جديدة")
-    with st.form("legal_form"):
+    st.subheader("🗓️ أحدث الجلسات المضافة")
+    latest_sessions = pd.read_sql_query("""
+        SELECT cases.case_no, sessions.session_date, sessions.decision 
+        FROM sessions 
+        JOIN cases ON cases.id = sessions.case_id 
+        ORDER BY sessions.id DESC LIMIT 5""", conn)
+    st.table(latest_sessions)
+
+# --- 2. إضافة قضية جديدة ---
+elif choice == "➕ إضافة قضية جديدة":
+    st.title("📝 تسجيل قضية جديدة")
+    with st.form("case_form"):
         col1, col2 = st.columns(2)
         with col1:
-            req_id = st.text_input("رقم الوارد / القضية")
-            subject = st.text_area("موضوع الطلب أو التظلم")
+            case_no = st.text_input("رقم القضية")
+            year = st.text_input("السنة القضائية")
+            court = st.text_input("المحكمة / الدائرة")
         with col2:
-            person = st.text_input("اسم صاحب الشأن")
-            lawyer = st.selectbox("الباحث القانوني المختص", ["أحمد علي", "سارة محمد", "خالد محمود"])
-            days_limit = st.number_input("المدة القانونية للرد (أيام)", value=15)
+            opponent = st.text_input("اسم الخصم")
+            case_type = st.selectbox("نوع القضية", ["مدني", "إداري", "عمالي", "تأديب", "جنح", "أخرى"])
+            status = st.selectbox("حالة القضية", ["متداولة", "محجوزة للحكم", "منتهية"])
         
-        submitted = st.form_submit_button("حفظ الطلب")
+        subject = st.text_area("موضوع القضية")
         
-        if submitted:
-            due_date = datetime.now() + timedelta(days=days_limit)
-            new_data = {
-                "رقم الطلب": req_id,
-                "تاريخ الورود": datetime.now().strftime("%Y-%m-%d"),
-                "موضوع الطلب": subject,
-                "صاحب الشأن": person,
-                "الموظف المختص": lawyer,
-                "الحالة": "قيد الدراسة",
-                "موعد الرد القانوني": due_date.strftime("%Y-%m-%d")
-            }
-            st.session_state.legal_db = pd.concat([st.session_state.legal_db, pd.DataFrame([new_data])], ignore_index=True)
-            st.success("تم تسجيل المعاملة وتحديد موعد الرد التلقائي.")
+        submit = st.form_submit_button("حفظ القضية في النظام")
+        
+        if submit:
+            if case_no and opponent:
+                c.execute("INSERT INTO cases (case_no, year, court, opponent, case_type, subject, status) VALUES (?,?,?,?,?,?,?)", 
+                          (case_no, year, court, opponent, case_type, subject, status))
+                conn.commit()
+                st.success(f"تم تسجيل القضية رقم {case_no} بنجاح!")
+            else:
+                st.error("يرجى إدخال رقم القضية واسم الخصم على الأقل.")
 
-elif choice == "لوحة المتابعة":
-    st.header("📊 متابعة القضايا والطلبات")
+# --- 3. إدارة الجلسات ---
+elif choice == "📅 إدارة الجلسات":
+    st.title("⚖️ متابعة الجلسات والقرارات")
     
-    # إحصائيات سريعة
-    total = len(st.session_state.legal_db)
-    st.metric("إجمالي المعاملات قيد الدراسة", total)
-    
-    # عرض البيانات مع إمكانية التصفية
-    st.dataframe(st.session_state.legal_idb, use_container_width=True)
-
-# تذييل الصفحة بالاسم المطلوب
-st.divider()
-st.markdown("**مع تحيات وليد حماد - الإدارة العامة للشؤون القانونية - ديوان عام منطقة البحيرة**")
+    # اختيار القضية أولاً
+    cases_df = pd.read_sql_query("SELECT id, case_no || ' لعام ' || year as case_desc FROM cases", conn)
+    if not cases_df.empty:
+        selected_case_desc = st.selectbox("اختر القضية لإضافة جلسة لها", cases_df['case_desc'])
+        case_id = cases_df[cases_df['case_desc'] == selected_case_desc]['id'].values[0]
+        
+        with st.expander("➕ إضافة جلسة جديدة لهذه القضية"):
+            s_date = st.date_input("تاريخ الجلسة")
+            s_req = st.text_input("المطلوب للجلسة")
+            s_dec = st.text_area("قرار الجلسة (في حال انتهت)")
+            if st.button("حفظ الجلسة"):
+                c.execute("INSERT INTO sessions (case_id, session_date, requirements, decision) VALUES (?,?,?,?)", 
+                          (int(case_id), s_date, s_req, s_dec))
+                conn.commit()
+                st.info("تمت إضافة الجلسة بنجاح")
+        
+        st.subheader("📜 تاريخ جلسات هذه القضية")
+        history = pd.read_sql_query(f"SELECT session_date, requirements, decision FROM sessions WHERE case_id
