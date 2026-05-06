@@ -3,63 +3,84 @@ import pandas as pd
 from docx import Document
 from io import BytesIO
 
-# --- إعدادات الواجهة الفخمة ---
-st.set_page_config(page_title="منظومة المستشار الذكي - البحيرة", layout="wide")
+# --- إعدادات الواجهة الاحترافية ---
+st.set_page_config(page_title="المستشار الذكي - وليد حماد", layout="wide")
 
-# تصميم CSS لجعل الأيقونات والأزرار في واجهة البرنامج وبشكل فخم
 st.markdown("""
     <style>
-    .main { direction: rtl; text-align: right; background-color: #f4f7f6; }
+    .main { direction: rtl; text-align: right; background-color: #f8f9fa; }
     .stButton>button { 
-        height: 150px; width: 100%; border-radius: 20px; 
-        font-size: 24px; font-weight: bold; background-color: #ffffff; 
-        color: #1e3a8a; border: 3px solid #1e3a8a; box-shadow: 5px 5px 15px rgba(0,0,0,0.1);
+        height: 120px; width: 100%; border-radius: 15px; 
+        font-size: 22px; font-weight: bold; background-color: white; 
+        color: #1e3a8a; border: 2px solid #1e3a8a; transition: 0.3s;
     }
     .stButton>button:hover { background-color: #1e3a8a; color: white; }
-    .header-box { 
-        background-color: #1e3a8a; color: white; padding: 20px; 
-        border-radius: 15px; text-align: center; margin-bottom: 30px; 
+    .header { 
+        background: linear-gradient(90deg, #1e3a8a, #3b5998); 
+        color: white; padding: 25px; border-radius: 15px; 
+        text-align: center; margin-bottom: 25px; 
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- ترويسة الهيئة ---
-st.markdown('<div class="header-box"><h1>⚖️ منظومة المستشار القانوني الذكي</h1><h3>الهيئة القومية للتأمين الاجتماعي - ديوان عام البحيرة</h3></div>', unsafe_allow_html=True)
+# --- ترويسة البرنامج ---
+st.markdown('<div class="header"><h1>⚖️ منظومة المستشار القانوني الذكي</h1><p>الإدارة العامة للشئون القانونية - ديوان عام البحيرة</p></div>', unsafe_allow_html=True)
 
-# --- إدارة الحالة (Session State) ---
+# --- إدارة التنقل ---
 if 'page' not in st.session_state: st.session_state.page = "home"
+if 'lib' not in st.session_state: st.session_state.lib = []
 
-# --- الواجهة الرئيسية (الأيقونات كاملة في وجه البرنامج) ---
+# --- 1. الواجهة الرئيسية (أيقونات واضحة) ---
 if st.session_state.page == "home":
+    st.write(f"### مرحباً سيادة المستشار: وليد حماد")
     col1, col2, col3 = st.columns(3)
     with col1:
-        if st.button("🏛️\nقسم القضايا والطعون"): st.session_state.page = "cases"
+        if st.button("🏛️\nقسم القضايا والطعون"): st.session_state.page = "cases"; st.rerun()
     with col2:
-        if st.button("💡\nقسم الفتوى والبحث"): st.session_state.page = "fatwa"
+        if st.button("📚\nالمكتبة القانونية"): st.session_state.page = "library"; st.rerun()
     with col3:
-        if st.button("📂\nإدارة التحقيقات"): st.session_state.page = "investigations"
+        if st.button("📂\nإدارة التحقيقات"): st.session_state.page = "investigations"; st.rerun()
 
-    col4, col5, col6 = st.columns(3)
-    with col4:
-        if st.button("📚\nالمكتبة القانونية"): st.session_state.page = "library"
-    with col5:
-        if st.button("🔍\nسجلات البحث والأرشفة"): st.session_state.page = "archive"
-    with col6:
-        if st.button("👤\nالملف الشخصي (وليد حماد)"): st.session_state.page = "profile"
+# --- 2. قسم القضايا (صياغة بيانات حقيقية) ---
+elif st.session_state.page == "cases":
+    if st.button("🔙 العودة للرئيسية"): st.session_state.page = "home"; st.rerun()
+    
+    st.subheader("📝 صياغة مذكرة دفاع")
+    c1, c2 = st.columns(2)
+    with c1:
+        court = st.text_input("اسم المحكمة / الدائرة")
+        case_no = st.text_input("رقم الدعوى والسنة")
+    with c2:
+        litigant = st.text_input("اسم الخصم")
+        case_type = st.selectbox("نوع النزاع", ["صرف معاش", "إصابة عمل", "تعويض", "أخرى"])
+    
+    facts = st.text_area("الوقائع (اكتب تفاصيل الحالة هنا)", height=150)
+    
+    if st.button("✨ توليد المذكرة"):
+        memo = f"""مذكرة دفاع في الدعوى رقم {case_no}\nأمام محكمة {court}\nبشأن نزاع {case_type}\n\nأولاً: الدفوع:\n1. الدفع بسقوط الحق بالتقادم الطويل.\n2. الدفع برفض الدعوى لانتفاء السند القانوني.\n\nثانياً: الوقائع:\nحيث يطالب الخصم ({litigant}) بـ {case_type}، وحيث أن {facts}..\n\nبناء عليه:\nنطلب رفض الدعوى.\n\nعن الهيئة/ وليد حماد"""
+        st.text_area("المذكرة الناتجة:", memo, height=250)
+        
+        # تصدير للـ Word
+        doc = Document(); doc.add_paragraph(memo)
+        bio = BytesIO(); doc.save(bio)
+        st.download_button("📥 تحميل المذكرة Word", bio.getvalue(), f"memo_{case_no}.docx")
 
-# --- قسم القضايا (بيانات كاملة وصياغة متغيرة) ---
-if st.session_state.page == "cases":
-    if st.sidebar.button("🏠 العودة للرئيسية"): st.session_state.page = "home"; st.rerun()
+# --- 3. قسم المكتبة (حفظ وحذف) ---
+elif st.session_state.page == "library":
+    if st.button("🔙 العودة للرئيسية"): st.session_state.page = "home"; st.rerun()
+    st.subheader("📚 أرشيف المواد القانونية")
     
-    st.subheader("📝 صياغة مذكرة دفاع / صحيفة طعن")
+    t = st.text_input("عنوان المادة")
+    f = st.file_uploader("رفع ملف (PDF)")
+    if st.button("💾 حفظ"):
+        if t:
+            st.session_state.lib.append(t)
+            st.success(f"تم حفظ {t}")
     
-    with st.container():
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            court_name = st.text_input("اسم المحكمة (الدائرة)")
-            case_year = st.text_input("سنة القضية")
-        with c2:
-            case_num = st.text_input("رقم الدعوى")
-            session_date = st.date_input("تاريخ الجلسة")
-        with c3:
-            lit
+    st.write("---")
+    for i, item in enumerate(st.session_state.lib):
+        col_t, col_d = st.columns([4, 1])
+        col_t.write(f"📌 {item}")
+        if col_d.button("🗑️ حذف", key=f"del_{i}"):
+            st.session_state.lib.pop(i)
+            st.rerun()
