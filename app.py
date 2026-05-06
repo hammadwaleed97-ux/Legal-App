@@ -3,71 +3,84 @@ import pandas as pd
 from docx import Document
 from io import BytesIO
 
-# --- ضبط الواجهة لتكون احترافية ومناسبة للموبايل ---
-st.set_page_config(page_title="المستشار القانوني - البحيرة", layout="wide")
+# --- 1. إعدادات المظهر (عشان الأيقونات تظهر واضحة) ---
+st.set_page_config(page_title="منظومة البحيرة القانونية", layout="wide")
 
 st.markdown("""
     <style>
     .main { direction: rtl; text-align: right; }
-    .stButton>button { background-color: #1e3a8a; color: white; border-radius: 10px; height: 3.5em; font-weight: bold; width: 100%; border: 2px solid #fff; }
+    .stButton>button { background-color: #1e3a8a; color: white; border-radius: 10px; height: 3em; width: 100%; font-weight: bold; }
     .stDownloadButton>button { background-color: #28a745 !important; color: white !important; }
-    div[data-testid="stExpander"] { background-color: #f8f9fa; border-radius: 10px; }
+    div[data-testid="stExpander"] { background-color: #f8f9fa; border-radius: 10px; border: 1px solid #ddd; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- ترويسة الهيئة ---
-st.write("### الهيئة القومية للتأمين الاجتماعـــــــي")
-st.write("#### الإدارة العامة للشئون القانونية - ديوان عام البحيرة")
-st.write("---")
+# --- 2. إدارة البيانات (المكتبة والقضايا) ---
+if 'law_library' not in st.session_state:
+    st.session_state.law_library = []
 
-# --- إدارة الذاكرة (عشان مفيش حاجة تضيع وأنت فاتح) ---
-if 'lib' not in st.session_state: st.session_state.lib = []
+# --- 3. الهيكل الرئيسي (القائمة الجانبية) ---
+st.sidebar.header("⚖️ منظومة المستشار الذكي")
+st.sidebar.info("المستخدم: وليد حماد\nديوان عام البحيرة")
+menu = st.sidebar.radio("انتقل إلى:", ["🏛️ صياغة المذكرات", "📚 المكتبة القانونية"])
 
-# --- القائمة الرئيسية ---
-menu = st.sidebar.radio("اختر القسم:", ["القضايا والطعون", "الفتوى والتحقيقات", "المكتبة القانونية"])
-
-# --- أولاً: المكتبة القانونية (حفظ وحذف وعرض) ---
-if menu == "المكتبة القانونية":
-    st.subheader("📚 المكتبة القانونية الشاملة")
-    with st.expander("➕ إضافة مادة جديدة للمكتبة", expanded=True):
-        c1, c2 = st.columns(2)
-        with c1:
-            m_type = st.selectbox("نوع المادة", ["قوانين", "لوائح", "قرارات", "كتب دورية", "تعليمات"])
-            m_title = st.text_input("اسم المادة / رقم القانون")
-        with c2:
-            m_file = st.file_uploader("ارفع الملف (PDF)")
-        
-        if st.button("💾 حفظ في الأرشيف الذكي"):
-            if m_title:
-                st.session_state.lib.append({"النوع": m_type, "العنوان": m_title})
-                st.success(f"تم حفظ {m_title} بنجاح")
-
-    st.write("#### المذكرات والمواد المحفوظة:")
-    if st.session_state.lib:
-        for i, item in enumerate(st.session_state.lib):
-            col_a, col_b, col_c = st.columns([3, 1, 1])
-            col_a.info(f"{item['النوع']}: {item['العنوان']}")
-            if col_b.button("🗑️ حذف", key=f"del_{i}"):
-                st.session_state.lib.pop(i)
-                st.rerun()
-    else: st.info("المكتبة فارغة حالياً")
-
-# --- ثانياً: القضايا (صياغة حقيقية) ---
-elif menu == "القضايا والطعون":
-    st.subheader("🏛️ محرك الصياغة القانونية الذكي")
-    court = st.selectbox("المحكمة", ["الابتدائية", "الاستئناف", "النقض", "مجلس الدولة"])
-    role = st.selectbox("صفة الهيئة", ["مدعى عليها", "مدعية", "طاعنة", "مطعون ضدها"])
-    facts = st.text_area("ملخص الوقائع (سيقوم الذكاء الاصطناعي بترتيبها)", height=150)
+# --- 4. قسم الصياغة (بدون أخطاء) ---
+if menu == "🏛️ صياغة المذكرات":
+    st.header("🏛️ محرك الصياغة والترتيب القانوني")
     
-    if st.button("✨ صياغة المذكرة وترتيب الدفوع"):
-        # الصياغة بناءً على طلبك (المادة -> الشرح -> النتيجة)
-        draft = f"بناءً على قانون التأمينات الاجتماعية..\n\nأولاً: الدفوع القانونية:\n1. الدفع بسقوط الحق بالتقادم.\n2. الدفع برفض الدعوى لعدم الصحة.\n\nثانياً: المادة القانونية:\nبالتطبيق على مادة النزاع، وحيث أن الوقائع تخلص في {facts}..\n\nثالثاً: النتيجة:\nلذلك تطلب الهيئة رفض الدعوى.\n\nعن الهيئة\nعضو القانونية / ...........   مدير القانونية / ..........."
-        st.text_area("المذكرة القانونية الناتجة", draft, height=250)
+    col1, col2 = st.columns(2)
+    with col1:
+        court = st.selectbox("المحكمة", ["الابتدائية", "الاستئناف", "النقض", "مجلس الدولة"])
+    with col2:
+        role = st.selectbox("صفة الهيئة", ["مدعى عليها", "طاعنة", "مستأنفة"])
         
-        # زر التحميل (Word)
-        doc = Document()
-        doc.add_paragraph(draft)
-        bio = BytesIO()
-        doc.save(bio)
-        st.download_button("💾 تحميل المذكرة (Word)", bio.getvalue(), "memo.docx")
+    facts = st.text_area("ادخل ملخص الوقائع هنا (لترتيبها قانونياً)")
+    
+    if st.button("✨ ابدأ الصياغة الآلية"):
+        if facts:
+            # محرك الصياغة المرتبة (الدفع -> المادة -> النتيجة)
+            draft_text = (
+                f"مذكرة دفاع مقدمة من الهيئة القومية للتأمين الاجتماعي\n"
+                f"أمام محكمة {court}\n\n"
+                f"أولاً: الدفوع القانونية:\n"
+                f"1. الدفع بسقوط الحق في المطالبة بالتقادم.\n"
+                f"2. الدفع برفض الدعوى لانتفاء السند القانوني.\n\n"
+                f"ثانياً: المادة القانونية وشرحها:\n"
+                f"بإنزال حكم القانون على واقعة أن: {facts}..\n\n"
+                f"ثالثاً: النتيجة:\n"
+                f"لذلك نطلب رفض الدعوى وإلزام المدعي بالمصاريف.\n\n"
+                f"عن الهيئة/ وليد حماد"
+            )
+            st.info("تمت الصياغة بنجاح:")
+            st.text_area("المذكرة:", draft_text, height=300)
+            
+            # تحويل المذكرة لملف Word للتحميل
+            doc = Document()
+            doc.add_paragraph(draft_text)
+            buffer = BytesIO()
+            doc.save(buffer)
+            st.download_button(label="📥 تحميل المذكرة Word", data=buffer.getvalue(), file_name="memo.docx")
+        else:
+            st.error("برجاء إدخال الوقائع")
 
+# --- 5. قسم المكتبة (إضافة وحذف) ---
+elif menu == "📚 المكتبة القانونية":
+    st.header("📚 المرصد القانوني (أرشفة وحفظ)")
+    
+    with st.expander("➕ إضافة مادة جديدة (قانون/لائحة)", expanded=True):
+        l_title = st.text_input("عنوان القانون أو المادة")
+        l_type = st.selectbox("التصنيف", ["قانون", "لائحة", "تعليمات", "حكم قضائي"])
+        if st.button("💾 حفظ في الأرشيف"):
+            if l_title:
+                st.session_state.law_library.append({"title": l_title, "type": l_type})
+                st.success(f"تم حفظ {l_title}")
+            else: st.warning("ادخل العنوان")
+
+    st.write("---")
+    st.subheader("🗂️ المحتويات المحفوظة")
+    for i, item in enumerate(st.session_state.law_library):
+        c1, c2 = st.columns([4, 1])
+        c1.write(f"📌 {item['type']}: {item['title']}")
+        if c2.button("🗑️ حذف", key=f"del_{i}"):
+            st.session_state.law_library.pop(i)
+            st.rerun()
