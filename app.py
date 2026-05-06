@@ -2,87 +2,92 @@ import streamlit as st
 from docx import Document
 from io import BytesIO
 
-# إعدادات الواجهة لتكون احترافية ومناسبة للموبايل
+# إعدادات الواجهة الاحترافية (تنسيق الصور 14 و 15)
 st.set_page_config(page_title="منظومة المستشار وليد حماد", layout="wide")
 
 st.markdown("""
     <style>
     .main { direction: rtl; text-align: right; }
     .stButton>button { 
-        height: 120px; width: 100%; border-radius: 15px; 
-        font-size: 22px; font-weight: bold; background-color: #ffffff; 
-        color: #1e3a8a; border: 3px solid #1e3a8a;
+        height: 100px; width: 100%; border-radius: 15px; 
+        font-size: 20px; font-weight: bold; background-color: #f0f2f6; 
+        color: #1e3a8a; border: 2px solid #1e3a8a;
     }
-    .stButton>button:hover { background-color: #1e3a8a; color: white; }
-    .user-header { 
+    .header-box { 
         background-color: #1e3a8a; color: white; padding: 20px; 
-        border-radius: 15px; text-align: center; margin-bottom: 25px; 
+        border-radius: 15px; text-align: center; margin-bottom: 20px; 
     }
     </style>
     """, unsafe_allow_html=True)
 
-# إدارة الصفحات لتجنب الأخطاء البرمجية
 if 'page' not in st.session_state:
     st.session_state.page = "home"
 
-# 1. الصفحة الرئيسية (الأيقونات كما ظهرت في صورك)
+# --- الصفحة الرئيسية ---
 if st.session_state.page == "home":
-    st.markdown('<div class="user-header"><h1>⚖️ منظومة المستشار القانوني</h1><h3>ديوان عام البحيرة</h3></div>', unsafe_allow_html=True)
-    st.write(f"#### مرحباً سيادة المستشار: وليد حماد")
+    st.markdown('<div class="header-box"><h1>⚖️ محرك الصياغة القانونية الذكي</h1><p>ديوان عام البحيرة - الشئون القانونية</p></div>', unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns(3)
     with col1:
-        if st.button("🏛️\nقسم القضايا والطعون"): st.session_state.page = "cases"; st.rerun()
+        if st.button("🏛️\nقسم القضايا"): st.session_state.page = "cases"; st.rerun()
     with col2:
-        if st.button("📚\nالمكتبة القانونية"): st.session_state.page = "lib"; st.rerun()
+        if st.button("📚\nالمكتبة"): st.session_state.page = "lib"; st.rerun()
     with col3:
-        if st.button("📂\nإدارة التحقيقات"): st.session_state.page = "inv"; st.rerun()
+        if st.button("📂\nالتحقيقات"): st.session_state.page = "inv"; st.rerun()
 
-# 2. قسم القضايا (يعالج أخطاء الصياغة والبيانات)
+# --- قسم القضايا مع نظام الدفوع الذكي ---
 elif st.session_state.page == "cases":
-    if st.sidebar.button("🏠 العودة للرئيسية"):
-        st.session_state.page = "home"; st.rerun()
+    if st.sidebar.button("🏠 الرئيسية"): st.session_state.page = "home"; st.rerun()
     
-    st.header("🏛️ محرك صياغة المذكرات")
+    st.subheader("🏛️ إعداد مذكرة دفاع نموذجية")
     
-    c1, c2 = st.columns(2)
-    with c1:
-        court = st.text_input("اسم المحكمة")
-        case_id = st.text_input("رقم الدعوى")
-    with c2:
-        opponent = st.text_input("اسم الخصم")
-        subject = st.selectbox("نوع النزاع", ["صرف معاش عجز", "إصابة عمل", "ضم مدة"])
+    with st.expander("📝 بيانات الدعوى", expanded=True):
+        c1, c2 = st.columns(2)
+        with c1:
+            court = st.text_input("المحكمة / الدائرة")
+            case_no = st.text_input("رقم الدعوى")
+        with c2:
+            opponent = st.text_input("اسم الخصم")
+            case_type = st.selectbox("نوع النزاع", ["صرف معاش", "إصابة عمل", "تعويض", "أخرى"])
+
+    # زرع الدفوع مباشرة في الكود (بناءً على الصور 3، 5، 13)
+    st.markdown("### ⚖️ الدفوع القانونية المقترحة")
+    d1 = st.checkbox("الدفع بسقوط الحق بالتقادم الطويل (المادة 374 مدني)", value=True)
+    d2 = st.checkbox("الدفع برفض الدعوى لانتفاء السند القانوني السليم", value=True)
+    d3 = st.checkbox("الدفع بعدم قبول الدعوى لرفعها على غير ذي صفة", value=False)
     
-    facts = st.text_area("الوقائع الجوهرية (كما بالصحيفة):", height=150)
-    
-    if st.button("🚀 صياغة المذكرة الآن"):
-        if not court or not case_id:
-            st.error("برجاء إدخال بيانات المحكمة ورقم الدعوى")
-        else:
-            # صياغة قانونية منضبطة بناءً على نوع النزاع
-            memo_text = f"""مذكرة دفاع مقدمة من الهيئة القومية للتأمين الاجتماعي
-أمام محكمة {court} في الدعوى رقم {case_id}
-بشأن نزاع: {subject}
+    custom_defense = st.text_input("إضافة دفع خاص آخر:")
+    facts = st.text_area("الوقائع الجوهرية:", "يرجى كتابة ملخص الحالة هنا...")
+
+    if st.button("🚀 توليد المذكرة النهائية"):
+        # تجميع الدفوع المختارة
+        selected_defenses = ""
+        if d1: selected_defenses += "1. الدفع بسقوط الحق بالتقادم الطويل.\n"
+        if d2: selected_defenses += "2. الدفع برفض الدعوى لانتفاء السند القانوني.\n"
+        if d3: selected_defenses += "3. الدفع بعدم قبول الدعوى لانتفاء الصفة.\n"
+        if custom_defense: selected_defenses += f"4. {custom_defense}\n"
+
+        memo = f"""مذكرة دفاع مقدمة من الهيئة القومية للتأمين الاجتماعي
+أمام محكمة {court} في الدعوى رقم {case_no}
 
 أولاً: الدفوع القانونية:
-1. الدفع بسقوط الحق في المطالبة بالتقادم الطويل.
-2. الدفع برفض الدعوى لانتفاء السند القانوني السليم.
+{selected_defenses}
 
 ثانياً: الوقائع:
-حيث يطالب المدعي ({opponent}) بـ {subject}، وحيث أن الوقائع تتلخص في {facts}...
+بما أن المدعي ({opponent}) يطالب بـ {case_type}، فإن الوقائع تتلخص في: {facts}
 
 بناء عليه:
-نصمم على الطلبات وهي رفض الدعوى وإلزام المدعي بالمصاريف.
+نصمم على طلب رفض الدعوى وإلزام المدعي بالمصاريف.
 
 مع تحيات وليد حماد
 الادارة العامة للشئون القانونية ديوان عام منطقة البحيرة"""
-            
-            st.success("تمت الصياغة بنجاح")
-            st.text_area("المسودة النهائية:", memo_text, height=300)
-            
-            # توليد ملف Word
-            doc = Document()
-            doc.add_paragraph(memo_text)
-            buffer = BytesIO()
-            doc.save(buffer)
-            st.download_button("📥 تحميل المذكرة (Word)", buffer.getvalue(), f"memo_{case_id}.docx")
+
+        st.markdown("---")
+        st.text_area("المذكرة جاهزة للمراجعة:", memo, height=300)
+        
+        # تحويل لملف Word (الصورة 13)
+        doc = Document()
+        doc.add_paragraph(memo)
+        bio = BytesIO()
+        doc.save(bio)
+        st.download_button("📥 تحميل المذكرة Word", bio.getvalue(), f"memo_{case_no}.docx")
