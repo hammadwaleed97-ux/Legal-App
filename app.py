@@ -1,50 +1,39 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
 
-# إعدادات الصفحة
-st.set_page_config(page_title="المستشار القانوني - التأمينات", layout="wide")
+# 1. إعدادات الصفحة الأساسية
+st.set_page_config(page_title="القانونية - البحيرة", layout="wide")
 
-# تنسيق الواجهة للغة العربية
-st.markdown("""
-    <style>
-    .main { direction: rtl; text-align: right; }
-    div.stButton > button:first-child { background-color: #2c3e50; color:white; }
-    </style>
-    """, unsafe_allow_html=True)
+# 2. تهيئة مخزن البيانات
+if 'legal_data' not in st.session_state:
+    st.session_state.legal_data = pd.DataFrame(columns=["الرقم", "الاسم", "النوع", "الحالة"])
 
-st.title("⚖️ منظومة الإدارة القانونية - ديوان عام البحيرة")
+# 3. العنوان الجانبي والقائمة
+st.sidebar.title("⚖️ إدارة الشؤون القانونية")
+choice = st.sidebar.radio("انتقل إلى:", ["إضافة ملف جديد", "سجل القضايا"])
 
-# قائمة جانيبة للتنقل
-menu = ["🏠 الرئيسية", "📝 تسجيل قضية/تظلم", "🔍 بحث ومتابعة", "📚 المكتبة القانونية"]
-choice = st.sidebar.radio("القائمة الرئيسية", menu)
-
-# قاعدة بيانات وهمية (في الواقع يفضل ربطها بـ Google Sheets أو SQL)
-if 'data' not in st.session_state:
-    st.session_state.data = pd.DataFrame(columns=["رقم القضية", "صاحب الشأن", "الرقم التأميني", "نوع النزاع", "تاريخ الجلسة", "الموقف الحالي"])
-
-if choice == "🏠 الرئيسية":
-    st.subheader("إحصائيات سريعة")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("إجمالي القضايا", len(st.session_state.data))
-    col2.metric("قضايا منظورة", "5")
-    col3.metric("تظلمات جديدة", "2")
-    st.info("مرحباً بك في نظام الأرشفة القانونية الخفيف")
-
-elif choice == "📝 تسجيل قضية/تظلم":
-    st.subheader("إدخال بيانات ملف جديد")
-    with st.form("case_form"):
-        col1, col2 = st.columns(2)
-        with col1:
-            case_id = st.text_input("رقم القضية / التظلم")
-            member_name = st.text_input("اسم صاحب الشأن")
-            ins_id = st.text_input("الرقم التأميني")
-        with col2:
-            case_type = st.selectbox("نوع النزاع", ["صرف معاش", "ضم مدة", "إصابة عمل", "منازعة قانونية"])
-            case_date = st.date_input("تاريخ أول جلسة / إجراء")
-            status = st.text_area("ملخص الموقف الحالي")
+# 4. واجهة إضافة ملف جديد
+if choice == "إضافة ملف جديد":
+    st.header("تسجيل قضية أو تظلم")
+    with st.form("my_form"):
+        c1, c2 = st.columns(2)
+        with c1:
+            num = st.text_input("رقم القضية")
+            name = st.text_input("اسم صاحب الشأن")
+        with c2:
+            ctype = st.selectbox("نوع المنازعة", ["معاشات", "إصابات", "ضم مدة"])
+            status = st.text_input("الموقف الحالي")
             
-        submit = st.form_submit_button("حفظ الملف القانوني")
-        
-        if submit:
-            new_row = {"رقم القضية": case_id, "صاحب الشأن": member_name, "الرقم التأميني": ins_id,
+        submitted = st.form_submit_button("حفظ في الأرشيف")
+        if submitted:
+            new_row = {"الرقم": num, "الاسم": name, "النوع": ctype, "الحالة": status}
+            st.session_state.legal_data = pd.concat([st.session_state.legal_data, pd.DataFrame([new_row])], ignore_index=True)
+            st.success("تم الحفظ بنجاح")
+
+# 5. عرض السجل
+else:
+    st.header("🗂️ أرشيف القضايا المسجلة")
+    if not st.session_state.legal_data.empty:
+        st.dataframe(st.session_state.legal_data, use_container_width=True)
+    else:
+        st.info("لا توجد قضايا مسجلة حالياً")
