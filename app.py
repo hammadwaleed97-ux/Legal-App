@@ -2,89 +2,72 @@ import streamlit as st
 import pandas as pd
 from docx import Document
 from io import BytesIO
-import fitz  # لقراءة ملفات PDF
 
-# --- 1. إعدادات الهوية البصرية ---
-st.set_page_config(page_title="منظومة الشئون القانونية", layout="wide")
+# --- 1. إعدادات الصفحة والتنسيق (لظهور الأيقونات بوضوح) ---
+st.set_page_config(page_title="منظومة وليد حماد القانونية", layout="wide")
 
 st.markdown("""
     <style>
     .main { direction: rtl; text-align: right; }
-    .stButton>button { background-color: #1e3a8a; color: white; border-radius: 10px; font-weight: bold; height: 3em; }
-    div[data-testid="stSidebarNav"] { direction: rtl; }
-    .stTextInput>div>div>input, .stTextArea>div>textarea { text-align: right; direction: rtl; }
+    /* تنسيق الأزرار لتكون بارزة وواضحة */
+    .stButton>button { width: 100%; border-radius: 8px; background-color: #1e3a8a; color: white; font-weight: bold; margin-bottom: 5px; border: 1px solid #fff; }
+    /* زر الحذف باللون الأحمر */
+    div.stButton > button:first-child:active, div.stButton > button:focus { background-color: #d32f2f; }
+    .stSidebar { background-color: #f0f2f6; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. محرك الصياغة الذكي (Core Engine) ---
-def draft_legal_document(doc_type, facts, context=""):
-    """دالة لترتيب الدفوع وصياغة المذكرة وفقاً لطلبك"""
-    header = "بناءً على قانون التأمينات الاجتماعية والمعاشات..\n\n"
-    
-    defense_order = (
-        "أولاً: الدفوع القانونية (مرتبة):\n"
-        "1. الدفع بعدم قبول الدعوى لانتفاء الصفة.\n"
-        "2. الدفع بسقوط الحق بالتقادم الطويل.\n"
-        "3. الدفع برفض الدعوى لعدم الارتكان لأساس قانوني.\n\n"
-    )
-    
-    explanation = (
-        "ثانياً: المادة القانونية وشرحها:\n"
-        f"بتطبيق نص المادة المنظمة لواقعة ({doc_type})، وحيث استقرت أحكام النقض على أن...\n\n"
-    )
-    
-    conclusion = (
-        "ثالثاً: النتيجة:\n"
-        f"وحيث أن الوقائع تخلص في {facts}، فإن الهيئة تطلب رفض الدعوى.\n\n"
-        "عضو الإدارة القانونية / .................        مدير الإدارة القانونية / ................."
-    )
-    
-    return header + defense_order + explanation + conclusion
+# --- 2. تهيئة "مخزن" المكتبة والقضايا ---
+if 'library_db' not in st.session_state:
+    st.session_state.library_db = []
 
-# --- 3. القائمة الجانبية والأقسام ---
-st.sidebar.image("https://upload.wikimedia.org/wikipedia/ar/b/bd/Social_Insurance_Logo.png", width=100)
-st.sidebar.title("إدارة الشئون القانونية")
-st.sidebar.info("المستخدم: وليد حماد")
+# --- 3. الهيئة والقائمة الجانبية ---
+st.sidebar.title("⚖️ الإدارة العامة للشئون القانونية")
+st.sidebar.write("### مع تحيات: وليد حماد")
+choice = st.sidebar.radio("القائمة الرئيسية:", ["🏛️ قطاع القضايا", "📚 المكتبة القانونية الذكية"])
 
-menu = st.sidebar.radio("القطاع الرئيسي:", [
-    "🏛️ قطاع القضايا (القسم القضائي)",
-    "💡 قطاع الفتوى والبحث",
-    "📂 قطاع التحقيقات",
-    "📚 المكتبة القانونية الذكية"
-])
-
-# --- 4. تنفيذ الأقسام بناءً على المعطيات ---
-
-if "قضايا" in menu:
-    st.subheader("🏛️ صياغة مذكرات الدفاع وصحف الطعون")
-    court_type = st.selectbox("نوع المحكمة", ["الابتدائية", "الاستئناف", "النقض", "مجلس الدولة"])
-    role = st.selectbox("صفة الهيئة", ["مدعى عليها", "مدعية", "طاعنة", "مطعون ضدها"])
+# --- 4. قسم المكتبة القانونية (تعديل كامل) ---
+if choice == "📚 المكتبة القانونية الذكية":
+    st.header("📚 المرصد القانوني للهيئة")
     
-    facts = st.text_area("ملخص الوقائع / أو ارفع صورة الصحيفة")
-    uploaded_file = st.file_uploader("ارفع المستند للقراءة بالذكاء الاصطناعي", type=['pdf', 'png', 'jpg'])
-    
-    if st.button("✨ ابدأ الصياغة القانونية وترتيب الدفوع"):
-        if facts or uploaded_file:
-            result = draft_legal_document(court_type, facts)
-            st.text_area("المذكرة المقترحة (قابلة للتعديل)", result, height=400)
+    # نموذج التحميل والحفظ
+    with st.expander("➕ إضافة مادة علمية جديدة (قانون، لائحة، قرار)", expanded=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            lib_type = st.selectbox("نوع المادة", ["قوانين", "لوائح", "قرارات وزارية", "منشورات", "كتب دورية", "أحكام قضائية"])
+            title = st.text_input("عنوان المادة (مثلاً: قانون 148 لسنة 2019)")
+        with col2:
+            up_file = st.file_uploader("اختر الملف (PDF)", type=['pdf'])
+        
+        if st.button("💾 حفظ في المكتبة"):
+            if title and up_file:
+                # حفظ المادة في المخزن
+                st.session_state.library_db.append({"النوع": lib_type, "العنوان": title, "الملف": up_file.name})
+                st.success(f"تم حفظ {title} بنجاح في أرشيف الهيئة")
+            else:
+                st.error("برجاء إدخال العنوان ورفع الملف")
+
+    st.divider()
+
+    # استعراض المكتبة مع زر الحذف
+    st.subheader("🗂️ المواد المحفوظة حالياً")
+    if st.session_state.library_db:
+        for index, item in enumerate(st.session_state.library_db):
+            col_a, col_b, col_c, col_d = st.columns([2, 3, 2, 1])
+            col_a.write(f"**{item['النوع']}**")
+            col_b.write(item['العنوان'])
+            col_c.button("👁️ فتح", key=f"open_{index}")
             
-            # أزرار الحفظ
-            col1, col2 = st.columns(2)
-            with col1:
-                st.download_button("💾 حفظ ملف Word", data="محتوى افتراضي", file_name="memo.docx")
-            with col2:
-                st.button("🖨️ طباعة فورية")
+            # زر الحذف
+            if col_d.button("🗑️ حذف", key=f"del_{index}"):
+                st.session_state.library_db.pop(index)
+                st.rerun() # لإعادة تحديث الصفحة فوراً بعد الحذف
+            st.write("---")
+    else:
+        st.info("المكتبة فارغة حالياً. قم بإضافة القوانين واللوائح لتظهر هنا.")
 
-elif "الفتوى" in menu:
-    st.subheader("💡 قسم الإفتاء القانوني (إصابات، زواج عرفي، فتاوى)")
-    f_type = st.selectbox("نوع البحث", ["فتوى قانونية", "إصابة عمل", "شكوى زواج عرفي"])
-    f_facts = st.text_area("ملخص وقائع الفتوى")
-    if st.button("صياغة مذكرة الرأي"):
-        st.write(draft_legal_document(f_type, f_facts))
-
-elif "المكتبة" in menu:
-    st.subheader("📚 المرصد القانوني للهيئة")
-    lib_cat = st.selectbox("المادة العلمية", ["قوانين", "لوائح", "كتب دورية", "أحكام قضائية"])
-    st.file_uploader(f"تحميل {lib_cat} جديد للموقع")
-    st.button("حفظ في الأرشيف الذكي")
-
+# --- 5. قسم القضايا (الصياغة) ---
+elif choice == "🏛️ قطاع القضايا":
+    st.header("🏛️ القسم القضائي")
+    st.info("هنا يتم الصياغة بناءً على المواد المرفوعة في المكتبة")
+    # (كود الصياغة السابق يوضع هنا)
