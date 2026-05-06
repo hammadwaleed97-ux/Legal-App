@@ -1,54 +1,50 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
+import streamlit as st
+import pandas as pd
+from datetime import datetime
 
-class LegalApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("نظام الإدارة القانونية - التأمينات والمعاشات")
-        self.root.geometry("900x500")
+# إعدادات الصفحة
+st.set_page_config(page_title="المستشار القانوني - التأمينات", layout="wide")
 
-        # العنوان الرئيسي
-        header = tk.Label(root, text="إدارة القضايا والتظلمات القانونية", font=("Arial", 18, "bold"), bg="#2c3e50", fg="white")
-        header.pack(fill=tk.X)
+# تنسيق الواجهة للغة العربية
+st.markdown("""
+    <style>
+    .main { direction: rtl; text-align: right; }
+    div.stButton > button:first-child { background-color: #2c3e50; color:white; }
+    </style>
+    """, unsafe_allow_html=True)
 
-        # إطار إدخال البيانات
-        frame = tk.Frame(root, pady=20)
-        frame.pack()
+st.title("⚖️ منظومة الإدارة القانونية - ديوان عام البحيرة")
 
-        tk.Label(frame, text="رقم القضية:").grid(row=0, column=5, padx=5)
-        self.case_num = tk.Entry(frame)
-        self.case_num.grid(row=0, column=4, padx=5)
+# قائمة جانيبة للتنقل
+menu = ["🏠 الرئيسية", "📝 تسجيل قضية/تظلم", "🔍 بحث ومتابعة", "📚 المكتبة القانونية"]
+choice = st.sidebar.radio("القائمة الرئيسية", menu)
 
-        tk.Label(frame, text="اسم صاحب الشأن:").grid(row=0, column=3, padx=5)
-        self.member_name = tk.Entry(frame)
-        self.member_name.grid(row=0, column=2, padx=5)
+# قاعدة بيانات وهمية (في الواقع يفضل ربطها بـ Google Sheets أو SQL)
+if 'data' not in st.session_state:
+    st.session_state.data = pd.DataFrame(columns=["رقم القضية", "صاحب الشأن", "الرقم التأميني", "نوع النزاع", "تاريخ الجلسة", "الموقف الحالي"])
 
-        tk.Label(frame, text="نوع النزاع:").grid(row=0, column=1, padx=5)
-        self.case_type = ttk.Combobox(frame, values=["صرف معاش", "ضم مدة", "إصابة عمل", "أخرى"])
-        self.case_type.grid(row=0, column=0, padx=5)
+if choice == "🏠 الرئيسية":
+    st.subheader("إحصائيات سريعة")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("إجمالي القضايا", len(st.session_state.data))
+    col2.metric("قضايا منظورة", "5")
+    col3.metric("تظلمات جديدة", "2")
+    st.info("مرحباً بك في نظام الأرشفة القانونية الخفيف")
 
-        # زر الإضافة
-        btn_add = tk.Button(root, text="تسجيل قضية جديدة", command=self.add_case, bg="#27ae60", fg="white", width=20)
-        btn_add.pack(pady=10)
-
-        # جدول العرض
-        self.tree = ttk.Treeview(root, columns=("Status", "Type", "Name", "ID"), show='headings')
-        self.tree.heading("Status", text="الموقف الحالي")
-        self.tree.heading("Type", text="نوع القضية")
-        self.tree.heading("Name", text="اسم صاحب الشأن")
-        self.tree.heading("ID", text="رقم القضية")
-        self.tree.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
-
-    def add_case(self):
-        if self.case_num.get() == "" or self.member_name.get() == "":
-            messagebox.showwarning("تنبيه", "يرجى ملء البيانات الأساسية")
-            return
+elif choice == "📝 تسجيل قضية/تظلم":
+    st.subheader("إدخال بيانات ملف جديد")
+    with st.form("case_form"):
+        col1, col2 = st.columns(2)
+        with col1:
+            case_id = st.text_input("رقم القضية / التظلم")
+            member_name = st.text_input("اسم صاحب الشأن")
+            ins_id = st.text_input("الرقم التأميني")
+        with col2:
+            case_type = st.selectbox("نوع النزاع", ["صرف معاش", "ضم مدة", "إصابة عمل", "منازعة قانونية"])
+            case_date = st.date_input("تاريخ أول جلسة / إجراء")
+            status = st.text_area("ملخص الموقف الحالي")
+            
+        submit = st.form_submit_button("حفظ الملف القانوني")
         
-        # إضافة البيانات للجدول مؤقتاً
-        self.tree.insert("", tk.END, values=("قيد النظر", self.case_type.get(), self.member_name.get(), self.case_num.get()))
-        messagebox.showinfo("تم", "تم تسجيل البيانات بنجاح")
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = LegalApp(root)
-    root.mainloop()
+        if submit:
+            new_row = {"رقم القضية": case_id, "صاحب الشأن": member_name, "الرقم التأميني": ins_id,
