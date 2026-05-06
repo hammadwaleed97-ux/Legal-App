@@ -2,105 +2,89 @@ import streamlit as st
 import pandas as pd
 from docx import Document
 from io import BytesIO
-import fitz  # لفتح وقراءة ملفات PDF
+import fitz  # لقراءة ملفات PDF
 
-# --- 1. إعدادات المظهر والجماليات ---
+# --- 1. إعدادات الهوية البصرية ---
 st.set_page_config(page_title="منظومة الشئون القانونية", layout="wide")
 
-# تنسيق CSS لجعل الأيقونات بارزة والخطوط واضحة والتنسيق يمين
 st.markdown("""
     <style>
     .main { direction: rtl; text-align: right; }
-    .stButton>button { width: 100%; border-radius: 10px; height: 3em; background-color: #1e3a8a; color: white; font-weight: bold; border: 2px solid #bfdbfe; }
-    .stTextInput>div>div>input, .stTextArea>div>textarea { text-align: right; direction: rtl; border: 1px solid #1e3a8a; }
-    .sidebar .sidebar-content { background-image: linear-gradient(#2e7d32,#2e7d32); color: white; }
+    .stButton>button { background-color: #1e3a8a; color: white; border-radius: 10px; font-weight: bold; height: 3em; }
+    div[data-testid="stSidebarNav"] { direction: rtl; }
+    .stTextInput>div>div>input, .stTextArea>div>textarea { text-align: right; direction: rtl; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. وظائف الذكاء الاصطناعي والصياغة ---
-def smart_legal_drafter(facts, court_type, role):
-    """محرك الصياغة القانونية المرتبة"""
-    template = f"""
-    بناءً على قانون التأمينات الاجتماعية والمعاشات الموحد..
+# --- 2. محرك الصياغة الذكي (Core Engine) ---
+def draft_legal_document(doc_type, facts, context=""):
+    """دالة لترتيب الدفوع وصياغة المذكرة وفقاً لطلبك"""
+    header = "بناءً على قانون التأمينات الاجتماعية والمعاشات..\n\n"
     
-    أولاً: الدفوع القانونية (مرتبة):
-    1. الدفع بعدم قبول الدعوى لرفعها على غير ذي صفة (إن وجد).
-    2. الدفع بسقوط الحق في المطالبة بالتقادم.
-    3. الدفع برفض الدعوى لعدم الارتكان لأساس قانوني سليم.
+    defense_order = (
+        "أولاً: الدفوع القانونية (مرتبة):\n"
+        "1. الدفع بعدم قبول الدعوى لانتفاء الصفة.\n"
+        "2. الدفع بسقوط الحق بالتقادم الطويل.\n"
+        "3. الدفع برفض الدعوى لعدم الارتكان لأساس قانوني.\n\n"
+    )
     
-    ثانياً: شرح المادة القانونية:
-    حيث تنص المادة المعنية على أنه "..." وشرحها في ضوء أحكام محكمة النقض أن...
+    explanation = (
+        "ثانياً: المادة القانونية وشرحها:\n"
+        f"بتطبيق نص المادة المنظمة لواقعة ({doc_type})، وحيث استقرت أحكام النقض على أن...\n\n"
+    )
     
-    ثالثاً: التطبيق على الوقائع:
-    بما أن {facts}..
+    conclusion = (
+        "ثالثاً: النتيجة:\n"
+        f"وحيث أن الوقائع تخلص في {facts}، فإن الهيئة تطلب رفض الدعوى.\n\n"
+        "عضو الإدارة القانونية / .................        مدير الإدارة القانونية / ................."
+    )
     
-    رابعاً: النتيجة:
-    لذلك نطلب الاحتياطياً رفض الدعوى وإلزام المدعي بالمصاريف.
-    """
-    return template
+    return header + defense_order + explanation + conclusion
 
-# --- 3. الهيكل الرئيسي للبرنامج ---
-st.title("⚖️ منظومة المستشار القانوني الذكي")
-st.write("### الهيئة القومية للتأمين الاجتماعي - ديوان عام البحيرة")
-st.write("---")
+# --- 3. القائمة الجانبية والأقسام ---
+st.sidebar.image("https://upload.wikimedia.org/wikipedia/ar/b/bd/Social_Insurance_Logo.png", width=100)
+st.sidebar.title("إدارة الشئون القانونية")
+st.sidebar.info("المستخدم: وليد حماد")
 
-# القائمة الجانبية بشكل بارز
-with st.sidebar:
-    st.header("🏢 أقسام الإدارة")
-    main_choice = st.radio("اختر القسم:", [
-        "🏛️ الإدارة العامة للقضايا",
-        "💡 الإدارة العامة للفتوى",
-        "📂 إدارة التحقيقات",
-        "📚 المكتبة القانونية الشاملة",
-        "🔍 سجلات البحث والأرشفة"
-    ])
-    st.divider()
-    st.write("👤 **المستخدم: وليد حماد**")
+menu = st.sidebar.radio("القطاع الرئيسي:", [
+    "🏛️ قطاع القضايا (القسم القضائي)",
+    "💡 قطاع الفتوى والبحث",
+    "📂 قطاع التحقيقات",
+    "📚 المكتبة القانونية الذكية"
+])
 
-# --- 4. منطق العمليات ---
+# --- 4. تنفيذ الأقسام بناءً على المعطيات ---
 
-if "🏛️ الإدارة العامة للقضايا" in main_choice:
-    st.subheader("📝 صياغة مذكرات الدفاع والصحف")
+if "قضايا" in menu:
+    st.subheader("🏛️ صياغة مذكرات الدفاع وصحف الطعون")
+    court_type = st.selectbox("نوع المحكمة", ["الابتدائية", "الاستئناف", "النقض", "مجلس الدولة"])
+    role = st.selectbox("صفة الهيئة", ["مدعى عليها", "مدعية", "طاعنة", "مطعون ضدها"])
     
-    col1, col2 = st.columns(2)
-    with col1:
-        court = st.selectbox("المحكمة", ["الابتدائية", "الاستئناف", "النقض", "مجلس الدولة"])
-        case_no = st.text_input("رقم الدعوى/الطعن")
-    with col2:
-        role = st.selectbox("صفة الهيئة", ["مدعية/طاعنة", "مدعى عليها/مطعون ضدها"])
-        year = st.text_input("السنة")
-
-    facts_input = st.text_area("ادخل ملخص الوقائع أو ارفع الملف بالأسفل")
+    facts = st.text_area("ملخص الوقائع / أو ارفع صورة الصحيفة")
+    uploaded_file = st.file_uploader("ارفع المستند للقراءة بالذكاء الاصطناعي", type=['pdf', 'png', 'jpg'])
     
-    # محرك قراءة الملفات
-    uploaded_file = st.file_uploader("ارفع صورة الصحيفة أو الحكم (PDF/PNG)", type=['pdf', 'png', 'jpg'])
-    
-    if st.button("✨ ابدأ الصياغة الذكية وترتيب الدفوع"):
-        if facts_input or uploaded_file:
-            with st.spinner('جاري تحليل النصوص وترتيب الدفوع قانونياً...'):
-                result = smart_legal_drafter(facts_input, court, role)
-                st.text_area("المذكرة القانونية المقترحة", result, height=400)
-                
-                # إظهار خانات التوقيع
-                st.markdown("---")
-                st.markdown("<h4 style='text-align: center;'>عن الهيئة</h4>", unsafe_allow_html=True)
-                c_sign1, c_sign2 = st.columns(2)
-                c_sign1.write("عضو الإدارة القانونية: .................")
-                c_sign2.write("مدير الإدارة القانونية: .................")
-                
-                # تفعيل أزرار الحفظ
-                col_save1, col_save2 = st.columns(2)
-                with col_save1:
-                    st.download_button("💾 حفظ كملف Word", data="محتوى افتراضي", file_name="memo.docx")
-                with col_save2:
-                    st.button("🖨️ طباعة المذكرة (PDF)")
-        else:
-            st.error("برجاء إدخال الوقائع أولاً")
+    if st.button("✨ ابدأ الصياغة القانونية وترتيب الدفوع"):
+        if facts or uploaded_file:
+            result = draft_legal_document(court_type, facts)
+            st.text_area("المذكرة المقترحة (قابلة للتعديل)", result, height=400)
+            
+            # أزرار الحفظ
+            col1, col2 = st.columns(2)
+            with col1:
+                st.download_button("💾 حفظ ملف Word", data="محتوى افتراضي", file_name="memo.docx")
+            with col2:
+                st.button("🖨️ طباعة فورية")
 
-elif "📚 المكتبة القانونية الشاملة" in main_choice:
-    st.subheader("📚 أرشيف القوانين والتعليمات")
-    category = st.selectbox("نوع المادة", ["قوانين", "لوائح", "كتب دورية", "أحكام نقض"])
-    up_lib = st.file_uploader(f"تحميل {category} جديد")
-    if st.button("حفظ في قاعدة بيانات المكتبة"):
-        st.success(f"تمت إضافة {category} بنجاح إلى المرصد القانوني")
+elif "الفتوى" in menu:
+    st.subheader("💡 قسم الإفتاء القانوني (إصابات، زواج عرفي، فتاوى)")
+    f_type = st.selectbox("نوع البحث", ["فتوى قانونية", "إصابة عمل", "شكوى زواج عرفي"])
+    f_facts = st.text_area("ملخص وقائع الفتوى")
+    if st.button("صياغة مذكرة الرأي"):
+        st.write(draft_legal_document(f_type, f_facts))
+
+elif "المكتبة" in menu:
+    st.subheader("📚 المرصد القانوني للهيئة")
+    lib_cat = st.selectbox("المادة العلمية", ["قوانين", "لوائح", "كتب دورية", "أحكام قضائية"])
+    st.file_uploader(f"تحميل {lib_cat} جديد للموقع")
+    st.button("حفظ في الأرشيف الذكي")
 
