@@ -2,89 +2,87 @@ import streamlit as st
 from docx import Document
 from io import BytesIO
 
-# 1. إعدادات فخمة تليق بسيادة المستشار
+# إعدادات الواجهة لتكون احترافية ومناسبة للموبايل
 st.set_page_config(page_title="منظومة المستشار وليد حماد", layout="wide")
 
 st.markdown("""
     <style>
-    .main { direction: rtl; text-align: right; background-color: #f0f2f6; }
+    .main { direction: rtl; text-align: right; }
     .stButton>button { 
-        height: 160px; width: 100%; border-radius: 25px; 
-        font-size: 26px; font-weight: bold; background-color: white; 
-        color: #1e3a8a; border: 4px solid #1e3a8a; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        transition: 0.3s;
+        height: 120px; width: 100%; border-radius: 15px; 
+        font-size: 22px; font-weight: bold; background-color: #ffffff; 
+        color: #1e3a8a; border: 3px solid #1e3a8a;
     }
-    .stButton>button:hover { background-color: #1e3a8a; color: white; transform: translateY(-5px); }
-    .header-box { 
-        background: linear-gradient(135deg, #0f172a, #1e3a8a); 
-        color: white; padding: 40px; border-radius: 20px; 
-        text-align: center; margin-bottom: 30px; border-bottom: 8px solid #ffd700;
+    .stButton>button:hover { background-color: #1e3a8a; color: white; }
+    .user-header { 
+        background-color: #1e3a8a; color: white; padding: 20px; 
+        border-radius: 15px; text-align: center; margin-bottom: 25px; 
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. إدارة الصفحات والمكتبة
-if 'page' not in st.session_state: st.session_state.page = "home"
-if 'law_db' not in st.session_state: st.session_state.law_db = []
+# إدارة الصفحات لتجنب الأخطاء البرمجية
+if 'page' not in st.session_state:
+    st.session_state.page = "home"
 
-# 3. الواجهة الرئيسية (الأيقونات الستة في وجه البرنامج)
+# 1. الصفحة الرئيسية (الأيقونات كما ظهرت في صورك)
 if st.session_state.page == "home":
-    st.markdown('<div class="header-box"><h1>⚖️ منظومة الإدارة القانونية الذكية</h1><h3>ديوان عام منطقة البحيرة</h3></div>', unsafe_allow_html=True)
-    st.write(f"#### أهلاً بك.. المستشار / وليد حماد")
+    st.markdown('<div class="user-header"><h1>⚖️ منظومة المستشار القانوني</h1><h3>ديوان عام البحيرة</h3></div>', unsafe_allow_html=True)
+    st.write(f"#### مرحباً سيادة المستشار: وليد حماد")
     
     col1, col2, col3 = st.columns(3)
     with col1:
-        if st.button("🏛️\nقسم القضايا"): st.session_state.page = "cases"; st.rerun()
+        if st.button("🏛️\nقسم القضايا والطعون"): st.session_state.page = "cases"; st.rerun()
     with col2:
-        if st.button("📚\nالمكتبة الفنية"): st.session_state.page = "lib"; st.rerun()
+        if st.button("📚\nالمكتبة القانونية"): st.session_state.page = "lib"; st.rerun()
     with col3:
-        if st.button("📂\nالتحقيقات"): st.session_state.page = "inv"; st.rerun()
-    
-    col4, col5, col6 = st.columns(3)
-    with col4:
-        if st.button("💡\nقسم الفتوى"): st.session_state.page = "fatwa"; st.rerun()
-    with col5:
-        if st.button("🔍\nسجلات البحث"): st.session_state.page = "search"; st.rerun()
-    with col6:
-        if st.button("👤\nالملف الشخصي"): st.session_state.page = "profile"; st.rerun()
+        if st.button("📂\nإدارة التحقيقات"): st.session_state.page = "inv"; st.rerun()
 
-# 4. قسم القضايا (بيانات وصياغة حقيقية)
+# 2. قسم القضايا (يعالج أخطاء الصياغة والبيانات)
 elif st.session_state.page == "cases":
-    if st.sidebar.button("🏠 العودة للرئيسية"): st.session_state.page = "home"; st.rerun()
-    st.header("🏛️ صياغة مذكرات الدفاع")
+    if st.sidebar.button("🏠 العودة للرئيسية"):
+        st.session_state.page = "home"; st.rerun()
     
-    c1, c2, c3 = st.columns(3)
+    st.header("🏛️ محرك صياغة المذكرات")
+    
+    c1, c2 = st.columns(2)
     with c1:
-        court = st.text_input("المحكمة المنظورة")
-        case_no = st.text_input("رقم الدعوى والسنة")
+        court = st.text_input("اسم المحكمة")
+        case_id = st.text_input("رقم الدعوى")
     with c2:
-        opp = st.text_input("اسم الخصم")
-        case_type = st.selectbox("نوع النزاع", ["صرف معاش", "إصابة عمل", "ضم مدة", "تعويض"])
-    with c3:
-        session = st.date_input("تاريخ الجلسة")
-
-    facts = st.text_area("الوقائع الجوهرية بالتفصيل:", height=150)
+        opponent = st.text_input("اسم الخصم")
+        subject = st.selectbox("نوع النزاع", ["صرف معاش عجز", "إصابة عمل", "ضم مدة"])
     
-    if st.button("🚀 ابدأ الصياغة"):
-        memo = f"""مذكرة دفاع\nأمام محكمة {court} في الدعوى رقم {case_no}\nبشأن نزاع {case_type}\n\nأولاً: الدفوع:\n1. الدفع بسقوط الحق بالتقادم.\n2. الدفع برفض الدعوى لانتفاء السند القانوني.\n\nثانياً: الوقائع:\nحيث يطالب الخصم ({opp}) بـ {case_type}، وحيث أن {facts}..\n\nبناء عليه:\nنطلب رفض الدعوى.\n\nمع تحيات وليد حماد\nالادارة العامة للشئون القانونية ديوان عام منطقة البحيرة"""
-        st.text_area("المسودة:", memo, height=300)
-        
-        doc = Document(); doc.add_paragraph(memo)
-        bio = BytesIO(); doc.save(bio)
-        st.download_button("📥 تحميل المذكرة Word", bio.getvalue(), f"دعوى_{case_no}.docx")
-
-# 5. المكتبة (حفظ وحذف حقيقي)
-elif st.session_state.page == "lib":
-    if st.sidebar.button("🏠 العودة"): st.session_state.page = "home"; st.rerun()
-    st.header("📚 أرشيف المكتبة")
-    title = st.text_input("عنوان المادة")
-    if st.button("💾 حفظ"):
-        if title: 
-            st.session_state.law_db.append(title)
-            st.success("تم الحفظ")
+    facts = st.text_area("الوقائع الجوهرية (كما بالصحيفة):", height=150)
     
-    for i, item in enumerate(st.session_state.law_db):
-        ca, cb = st.columns([4,1])
-        ca.info(item)
-        if cb.button("🗑️", key=f"d_{i}"):
-            st.session_state.law_db.pop(i); st.rerun()
+    if st.button("🚀 صياغة المذكرة الآن"):
+        if not court or not case_id:
+            st.error("برجاء إدخال بيانات المحكمة ورقم الدعوى")
+        else:
+            # صياغة قانونية منضبطة بناءً على نوع النزاع
+            memo_text = f"""مذكرة دفاع مقدمة من الهيئة القومية للتأمين الاجتماعي
+أمام محكمة {court} في الدعوى رقم {case_id}
+بشأن نزاع: {subject}
+
+أولاً: الدفوع القانونية:
+1. الدفع بسقوط الحق في المطالبة بالتقادم الطويل.
+2. الدفع برفض الدعوى لانتفاء السند القانوني السليم.
+
+ثانياً: الوقائع:
+حيث يطالب المدعي ({opponent}) بـ {subject}، وحيث أن الوقائع تتلخص في {facts}...
+
+بناء عليه:
+نصمم على الطلبات وهي رفض الدعوى وإلزام المدعي بالمصاريف.
+
+مع تحيات وليد حماد
+الادارة العامة للشئون القانونية ديوان عام منطقة البحيرة"""
+            
+            st.success("تمت الصياغة بنجاح")
+            st.text_area("المسودة النهائية:", memo_text, height=300)
+            
+            # توليد ملف Word
+            doc = Document()
+            doc.add_paragraph(memo_text)
+            buffer = BytesIO()
+            doc.save(buffer)
+            st.download_button("📥 تحميل المذكرة (Word)", buffer.getvalue(), f"memo_{case_id}.docx")
