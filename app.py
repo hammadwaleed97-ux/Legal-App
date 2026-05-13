@@ -1,12 +1,13 @@
 import streamlit as st
 import google.generativeai as genai
 
-# الربط بالمفتاح من الخزنة السرية اللي إنت عملتها
+# الربط بالمفتاح من الخزنة السرية
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
 st.set_page_config(page_title="المستشار القانوني", layout="wide")
 
+# تنسيق الواجهة
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo&display=swap');
@@ -25,18 +26,21 @@ if st.button("صياغة الرد القانوني ⚖️"):
     if user_q:
         with st.spinner("جاري الصياغة..."):
             try:
-                # هذا السطر هو الحل النهائي لخطأ 404
+                # التعديل الجوهري لحل خطأ 404 نهائياً
                 model = genai.GenerativeModel('gemini-1.5-flash')
                 
-                prompt = f"أنت مستشار قانوني مصري خبير. صِغ رداً قانونياً مفصلاً على: {user_q}. ابدأ بـ 'بالإشارة إلى التساؤل المطروح..' واختم بـ 'مع تحيات وليد حماد - منطقة البحيرة'."
-                
-                response = model.generate_content(prompt)
+                # إرسال الاستفسار
+                response = model.generate_content(
+                    f"أنت مستشار قانوني مصري خبير. صِغ رداً قانونياً مفصلاً على: {user_q}. "
+                    f"ابدأ بـ 'بالإشارة إلى التساؤل المطروح..' واختم بـ 'مع تحيات وليد حماد - منطقة البحيرة'."
+                )
                 
                 st.markdown("---")
                 st.markdown(f'<div style="line-height:2; font-size:1.2rem; white-space: pre-wrap; color:#1e293b;">{response.text}</div>', unsafe_allow_html=True)
                 
             except Exception as e:
-                st.error(f"تنبيه تقني: {str(e)}")
+                # لو لسه فيه مشكلة هيطبع السبب الحقيقي عشان نعرفه
+                st.error(f"حدث خطأ تقني: {str(e)}")
     else:
         st.warning("يرجى كتابة السؤال أولاً.")
 
