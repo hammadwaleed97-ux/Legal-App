@@ -1,50 +1,40 @@
 import streamlit as st
+from pypdf import PdfReader
 import os
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.vectorstores import FAISS
-from langchain_openai import OpenAIEmbeddings
-from langchain.chains import RetrievalQA
-from langchain_openai import ChatOpenAI
 
 st.set_page_config(page_title="محرك الاستخراج القانوني")
-st.header("المساعد الذكي للتأمينات والمعاشات")
+st.header("برنامج الاستعلام عن التأمينات (استخراج آلي)")
 
-# --- لوحة تحكم المدير (أستاذ وليد) ---
+# --- لوحة تحكم الأستاذ وليد ---
 with st.sidebar:
     st.subheader("إدارة المادة العلمية")
-    password = st.text_input("كلمة المرور للرفع:", type="password")
-    
-    if password == "123": # كلمة السر الافتراضية
-        st.success("مرحباً أستاذ وليد")
-        uploaded_file = st.file_uploader("ارفع ملف المادة العلمية (PDF):", type="pdf")
+    password = st.text_input("كلمة المرور:", type="password")
+    if password == "123":
+        uploaded_file = st.file_uploader("ارفع المادة العلمية (PDF):", type="pdf")
         if uploaded_file:
-            with open("current_law.pdf", "wb") as f:
+            with open("my_law.pdf", "wb") as f:
                 f.write(uploaded_file.getvalue())
-            st.info("تم تحديث المادة العلمية بنجاح.")
+            st.success("تم تحديث المادة العلمية.")
 
-# --- واجهة الاستفسار للجمهور ---
-st.write("---")
-if os.path.exists("current_law.pdf"):
-    query = st.text_input("اكتب سؤالك للاستخراج من المادة العلمية:")
+# --- محرك البحث والاستخراج ---
+if os.path.exists("my_law.pdf"):
+    query = st.text_input("اكتب سؤالك للاستخراج من القانون:")
     
     if query:
-        with st.spinner("جاري البحث في نصوص المادة العلمية..."):
-            # تحميل الملف وبناء قاعدة بيانات للبحث
-            loader = PyPDFLoader("current_law.pdf")
-            docs = loader.load()
+        # استخراج النص من الملف حرفياً
+        reader = PdfReader("my_law.pdf")
+        full_text = ""
+        for page in reader.pages:
+            full_text += page.extract_text()
             
-            # عملية الاستخراج الذكي (تتطلب OPENAI_API_KEY في الإعدادات)
-            embeddings = OpenAIEmbeddings()
-            db = FAISS.from_documents(docs, embeddings)
-            
-            qa_chain = RetrievalQA.from_chain_type(
-                llm=ChatOpenAI(model_name="gpt-3.5-turbo"),
-                chain_type="stuff",
-                retriever=db.as_retriever()
-            )
-            
-            answer = qa_chain.run(query)
-            st.markdown("### الإجابة المستخرجة وفقاً للمواد:")
-            st.success(answer)
+        # البحث عن الكلمة المفتاحية وعرض الفقرة المتعلقة بها
+        if query in full_text:
+            # هنا البرنامج "يستخرج" الجزء المتعلق بسؤالك فقط
+            start_index = full_text.find(query)
+            extracted_text = full_text[max(0, start_index-200): start_index+500]
+            st.markdown("### المادة العلمية المستخرجة:")
+            st.info(f"... {extracted_text} ...")
+        else:
+            st.warning("لم يتم العثور على نص مطابق تماماً، حاول كتابة كلمات من صلب المادة القانونية.")
 else:
-    st.warning("البرنامج في انتظار رفع المادة العلمية من قبل المدير للبدء.")
+    st.warning("برجاء رفع المادة العلمية أولاً.")
