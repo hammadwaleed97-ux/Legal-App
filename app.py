@@ -1,60 +1,46 @@
 import streamlit as st
-import pdfplumber
 import google.generativeai as genai
 
-# الربط بمفتاحك الشخصي (المحرك الذكي)
-genai.configure(api_key="AIzaSyCck8uvMFNFrOePBOYGTLrabPR369BXnHI")
+# الربط بالمفتاح الجديد اللي سيادتك بعته
+genai.configure(api_key="AIzaSyDVSr4skcmloNtTIQi54LGmG_ZnCjRxoNc")
 
-st.set_page_config(page_title="المستشار القانوني الذكي", layout="wide")
+st.set_page_config(page_title="المستشار القانوني", layout="wide")
 
-# تنسيق المذكرة القانونية بشكل فخم يليق بك
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cairo&display=swap');
     html, body, [class*="css"] { font-family: 'Cairo', sans-serif; text-align: right; direction: rtl; }
-    .stApp { background-color: #f8fafc; }
-    .main-card { background: white; padding: 25px; border-radius: 15px; border-top: 10px solid #1e3a8a; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .main-card { background: white; padding: 25px; border-radius: 15px; border-top: 10px solid #1e3a8a; color: #1e293b; }
     </style>
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-card">', unsafe_allow_html=True)
 st.markdown('<h1 style="text-align:center; color:#1e3a8a;">المستشار القانوني الرقمي الذكي</h1>', unsafe_allow_html=True)
-st.markdown('<p style="text-align:center; color:#64748b; font-weight:bold;">إعداد الأستاذ/ وليد حماد - الإدارة العامة للشؤون القانونية بالبحيرة</p>', unsafe_allow_html=True)
-
-# دالة البحث السريع جداً
-def fast_search(query):
-    context = ""
-    # الملفات اللي أنت رفعتها
-    for f in ["law.pdf", "regulation.pdf"]:
-        try:
-            with pdfplumber.open(f) as pdf:
-                # بياخد أهم الصفحات بس عشان ميهنجش
-                for page in pdf.pages[:15]:
-                    text = page.extract_text()
-                    if text: context += text + "\n"
-                    if len(context) > 2000: break
-        except: continue
-    return context[:2000]
+st.markdown('<p style="text-align:center; font-weight:bold;">إعداد الأستاذ/ وليد حماد - منطقة البحيرة</p>', unsafe_allow_html=True)
 
 # خانة السؤال
-user_q = st.text_area("اطرح تساؤلك القانوني هنا:", height=150)
+user_q = st.text_area("اكتب تساؤلك القانوني هنا (بدون أمثلة):", height=150)
 
 if st.button("صياغة الرد القانوني ⚖️"):
     if user_q:
-        with st.spinner("جاري الصياغة الآن..."):
+        with st.spinner("جاري الاتصال بالمحرك الذكي..."):
             try:
-                ref = fast_search(user_q)
+                # محرك Gemini 1.5 Flash السريع
                 model = genai.GenerativeModel('gemini-1.5-flash')
                 
-                prompt = f"بناءً على نصوص القانون: {ref}\n أجب بأسلوب قانوني على: {user_q}\n ابدأ بـ 'بالإشارة إلى التساؤل المطروح..' واختم بـ 'مع تحيات وليد حماد - منطقة البحيرة'."
+                # توجيه الصياغة
+                prompt = f"أنت مستشار قانوني مصري. صِغ رداً قانونياً مفصلاً على: {user_q}. ابدأ بـ 'بالإشارة إلى التساؤل المطروح..' واختم بـ 'مع تحيات وليد حماد - منطقة البحيرة'."
                 
                 response = model.generate_content(prompt)
                 
                 st.markdown("---")
-                st.markdown(f'<div style="background:#fff; padding:20px; border-right:8px solid #facc15; line-height:2; font-size:1.2rem; color:#1e293b;">{response.text}</div>', unsafe_allow_html=True)
-            except:
-                st.error("فيه ضغط بسيط، جرب تضغط على الزرار مرة تانية وهتشتغل فوراً.")
+                # عرض النتيجة مباشرة
+                st.markdown(f'<div style="line-height:2; font-size:1.2rem; white-space: pre-wrap;">{response.text}</div>', unsafe_allow_html=True)
+                
+            except Exception as e:
+                # لو فيه غلط هيطلعه هنا بدل الرسالة اللي ضايقتك
+                st.error(f"خطأ تقني من جوجل: {str(e)}")
     else:
-        st.warning("اكتب سؤالك الأول يا سيادة المستشار.")
+        st.warning("يرجى كتابة السؤال أولاً.")
 
 st.markdown('</div>', unsafe_allow_html=True)
