@@ -1,28 +1,31 @@
 import os
+from langchain.document_loaders import DirectoryLoader, PyPDFLoader, TextLoader
+from langchain.indexes import VectorstoreIndexCreator
 
-# وظيفة المحرك: استخراج الإجابة من ملفات المادة العلمية المرفقة
-def extract_from_legal_resources(user_query, legal_folder="المادة_العلمية"):
+# 1. إعداد مجلد "المادة العلمية"
+# ضع كل ملفاتك (PDF, Text, Docx) في هذا المجلد
+MATERIAL_DIR = "scientific_material"
+if not os.path.exists(MATERIAL_DIR):
+    os.makedirs(MATERIAL_DIR)
+
+def ask_pension_bot(user_question):
     """
-    هذا المحرك لا يملك إجابات مسبقة.
-    بمجرد سؤال المستخدم، يدخل للمجلد ويقرأ المواد العلمية ويستخرج الإجابة.
+    هذه الوظيفة لا تعرف شيئاً من تلقاء نفسها.
+    هي تدخل إلى مجلد المادة العلمية، تقرأ الملفات، وتستخرج الإجابة.
     """
+    # تحميل المادة العلمية من المجلد
+    loader = DirectoryLoader(MATERIAL_DIR, glob="./*.*")
     
-    # قائمة المواد العلمية المحملة في البرنامج
-    resources = os.listdir(legal_folder)
+    # بناء كشاف (Index) للمادة العلمية للبحث السريع داخلها
+    index = VectorstoreIndexCreator().from_loaders([loader])
     
-    context = ""
-    # قراءة كافة الملفات (قانون 148، اللائحة، الكتب الدورية)
-    for file_name in resources:
-        with open(f"{legal_folder}/{file_name}", "r", encoding="utf-8") as file:
-            context += file.read()
+    # استخراج الإجابة والسند القانوني
+    # البرنامج سيبحث عن المواد والأنصبة داخل ملفاتك فقط
+    response = index.query(user_question)
+    
+    return response
 
-    # هنا المحرك "يستخرج" الإجابة من النص بناءً على سؤال المستخدم
-    # يتم استخدام تقنية "التنقيب عن النصوص" للربط بين السؤال والمادة
-    answer = perform_extraction(user_query, context)
-    
-    return answer
-
-def perform_extraction(query, source_material):
-    # منطق البحث والاستخراج الذكي بناءً على "المادة العلمية" فقط
-    # البرنامج هنا يبحث عن (المواد، الأنصبة، الشروط) داخل المادة العلمية
-    return f"بناءً على المادة العلمية المرفقة: {source_material[:200]}..." # مثال للاستخراج
+# --- مثال للاستخدام ---
+# بمجرد رفع المادة العلمية للمجلد، يمكنك تشغيل البرنامج:
+# question = "ما هو نصيب الابنة المطلقة في وجود أرملة وفقاً للمواد العلمية المرفوعة؟"
+# print(ask_pension_bot(question))
