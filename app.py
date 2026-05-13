@@ -1,71 +1,68 @@
 import streamlit as st
+import json
 
-# 1. إعدادات الصفحة
-st.set_page_config(page_title="الموسوعة القانونية المتكاملة - وليد حماد", layout="wide")
+# إعدادات الصفحة
+st.set_page_config(page_title="المستشار القانوني الذكي - وليد حماد", layout="centered")
 
-# 2. التنسيق (CSS) - تحسين الرؤية لليقين القانوني
+# تنسيق الواجهة (CSS) لجعل خانة السؤال والإجابة واضحة وكبيرة
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
     html, body, [class*="css"] { font-family: 'Cairo', sans-serif; text-align: right; direction: rtl; }
-    .stTextInput > div > div > input { text-align: right; }
-    .q-box { color: #ffffff; background-color: #0c4a6e; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; border-right: 10px solid #eab308; text-align: right; }
-    .a-box { color: #1f2937; background-color: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 1.05rem; line-height: 1.8; margin-bottom: 10px; text-align: right; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
-    .doc-box { color: #166534; background-color: #f0fdf4; padding: 12px; border-radius: 8px; border: 1px dashed #22c55e; font-size: 0.95rem; margin-top: 10px; }
-    .basis-box { color: #991b1b; font-weight: bold; font-size: 0.9rem; margin-top: 8px; background: #fef2f2; padding: 5px 10px; border-radius: 4px; display: inline-block; }
+    .stTextArea textarea { font-size: 1.2rem !important; text-align: right; border: 2px solid #1e3a8a !important; }
+    .answer-box { background-color: #f8fafc; border: 2px solid #e2e8f0; padding: 25px; border-radius: 15px; margin-top: 20px; text-align: right; min-height: 200px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    .signature { text-align: center; color: #64748b; margin-top: 50px; font-weight: bold; }
+    .stButton>button { width: 100%; background-color: #1e3a8a; color: white; height: 3rem; font-size: 1.2rem; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. قاعدة البيانات "الموسعة والدقيقة" (عينة من أهم مواد القانون واللائحة)
-legal_data = [
-    # تعاريف واشتراكات
-    {"باب": "1. التعاريف والاشتراكات", "مادة": "1", "س": "ما هو تعريف العجز الكامل المستديم؟", "ج": "كل عجز من شأنه أن يحول كلياً وبصفة مستديمة بين المؤمن عليه وبين مزاولته مهنته الأصلية أو أي عمل آخر، ويثبت ذلك بقرار من الهيئة المعنية بالتأمين الصحي.", "مستندات": "قرار اللجنة الطبية (نموذج 56)، بيان حالة وظيفية.", "سند": "المادة (1) بند (18) من القانون 148."},
-    {"باب": "1. التعاريف والاشتراكات", "مادة": "19", "س": "كيف يُحدد أجر الاشتراك؟", "ج": "يشمل الأجر الوظيفي، الأساسي، الحوافز، العمولات، البدلات (باستثناء البدلات التي لا تعتبر جزءاً من الأجر)، بحد أدنى وأقصى سنوي.", "مستندات": "استمارة (2) تأمينات، كشوف الأجور المعتمدة.", "سند": "المادة (19) من القانون، والمواد (43-46) من اللائحة."},
+# رأس البرنامج
+st.markdown("<h2 style='text-align: center; color: #1e3a8a;'>⚖️ محرك البحث القانوني المتخصص</h2>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center;'>قانون التأمينات الاجتماعية والمعاشات رقم 148 لسنة 2019 ولائحته التنفيذية</p>", unsafe_allow_html=True)
+
+# وظيفة البحث في قاعدة البيانات الداخلية
+def search_legal_db(query):
+    # هنا يتم استيراد البيانات من ملف JSON (الذي سننشئه بالأسفل)
+    try:
+        with open('legal_data.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        return "خطأ: قاعدة البيانات غير موجودة. تأكد من وجود ملف legal_data.json"
+
+    query = query.lower()
+    results = []
     
-    # المعاشات
-    {"باب": "2. المعاشات والتعويضات", "مادة": "21", "س": "ما هي الشروط التفصيلية للمعاش المبكر؟", "ج": "1- توافر مدة اشتراك فعلية تعطي الحق في معاش لا يقل عن 50% من أجر التسوية الأخير.\n2- ألا يقل المعاش عن 65% من الحد الأدنى لأجر الاشتراك في تاريخ استحقاق المعاش.\n3- توفر مدة اشتراك فعلية لا تقل عن 240 شهرًا (تصبح 300 شهرًا فعلية بدءًا من 1/1/2025).", "مستندات": "نموذج (20) طلب صرف، بيان مدد اشتراك (تدرج أجور).", "سند": "المادة (21) بند (6) من القانون، والمادة (102) من اللائحة."},
-    {"باب": "2. المعاشات والتعويضات", "مادة": "24", "س": "كيفية حساب متوسط أجر التسوية؟", "ج": "يُحسب المعاش عن كل مدة الاشتراك بواقع جزء واحد من 45 جزءاً من متوسط أجر الاشتراك السنوي.", "مستندات": "استمارة (2) للسنوات السابقة.", "سند": "المادة (24) من القانون."},
+    for item in data:
+        # البحث في السؤال، الإجابة، أو رقم المادة
+        if query in item['question'].lower() or query in item['answer'].lower() or query in item['article']:
+            res = f"<b>📌 المادة ({item['article']}): {item['question']}</b><br><br>"
+            res += f"<b>✅ الإجابة القانونية:</b><br>{item['answer']}<br><br>"
+            res += f"<b>📄 المستندات المطلوبة:</b><br>{item['documents']}<br><br>"
+            res += f"<b>⚖️ السند:</b> {item['basis']}<br><hr>"
+            results.append(res)
     
-    # إصابات العمل
-    {"باب": "3. إصابات العمل", "مادة": "52", "س": "كيف يُحسب معاش العجز الإصابي الجزئي؟", "ج": "إذا أدت الإصابة لعجز تقدر نسبته بـ 35% فأكثر، استحق المصاب معاشاً يقدر بنسبة ذلك العجز من معاش العجز الكامل (80% من الأجر).", "مستندات": "تقرير اللجنة الطبية لتقدير نسبة العجز، إخطار إصابة (نموذج 51).", "سند": "المادة (52) من القانون، والمادة (167) من اللائحة."},
+    if not results:
+        return "عذراً، لم أجد نصاً مطابقاً في القانون أو اللائحة. حاول كتابة كلمات مفتاحية أخرى (مثل: أرملة، عجز، إصابة، مادة 102)."
     
-    # المستحقون والجمع
-    {"باب": "4. المستحقون والجمع بين المعاشات", "مادة": "102", "س": "ما هي حدود وقواعد الجمع بين المعاش والدخل؟", "ج": "يجمع المستحق بين المعاشات أو المعاش والدخل في حدود الحد الأدنى للمعاش. الاستثناءات: الأرملة (تجمع بين معاشها عن زوجها ودخلها دون حدود)، والأولاد (يجمعون بين معاشي الوالدين دون حدود).", "مستندات": "بيان دخل معتمد، مفردات مرتب.", "سند": "المادة (102) من القانون، والمادة (263) من اللائحة."},
-    {"باب": "4. المستحقون والجمع بين المعاشات", "مادة": "105", "س": "متى تُقطع منحة الزواج للابنة؟", "ج": "عند زواج الابنة أو الأخت، وتصرف لمرة واحدة وتساوي معاش سنة، بحد أدنى 500 جنيه.", "مستندات": "صورة عقد الزواج، بطاقة الرقم القومي، طلب صرف (نموذج 21).", "سند": "المادة (105) من القانون، والمادة (268) من اللائحة."},
-    
-    # المنازعات
-    {"باب": "5. المنازعات والعقوبات", "مادة": "148", "س": "ما هي إجراءات التظلم من قرارات الهيئة؟", "ج": "يتم تقديم التظلم إلى لجنة فحص المنازعات بالهيئة قبل اللجوء للقضاء، ويجب الرد خلال 60 يومًا.", "مستندات": "طلب تظلم، صورة من القرار المتظلم منه.", "سند": "المادة (148) من القانون، والمادة (351) من اللائحة."}
-]
+    return "".join(results)
 
-# 4. الواجهة
-st.markdown("<h2 style='text-align: center; color: #0c4a6e;'>⚖️ المنصة القانونية الرقمية (قانون 148 لسنة 2019)</h2>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center;'>إعداد: وليد حماد - الإدارة العامة للشئون القانونية - البحيرة</p>", unsafe_allow_html=True)
-st.divider()
+# واجهة المستخدم (الخانات المطلوبة)
+st.markdown("### 🔍 اطرح تساؤلك القانوني:")
+user_query = st.text_area("", placeholder="اكتب سؤالك هنا أو رقم المادة... مثال: ما هي شروط المعاش المبكر؟", height=150)
 
-# 5. أدوات البحث
-col1, col2 = st.columns([1, 2])
-with col1:
-    topic_choice = st.selectbox("الموضوع / الباب:", ["كل الأبواب"] + sorted(list(set(d["باب"] for d in legal_data))))
-with col2:
-    search_query = st.text_input("ابحث بالكلمة (مثلاً: معاش مبكر، عجز، مادة 102)...")
+if st.button("عرض الإجابة القانونية ↩️"):
+    if user_query:
+        with st.spinner('جاري فحص مواد القانون واللائحة...'):
+            answer = search_legal_db(user_query)
+            st.markdown("### 📝 الإجابة:")
+            st.markdown(f'<div class="answer-box">{answer}</div>', unsafe_allow_html=True)
+    else:
+        st.warning("من فضلك اكتب سؤالاً أولاً.")
 
-# 6. الفلترة والعرض
-results = [
-    d for d in legal_data 
-    if (topic_choice == "كل الأبواب" or d["باب"] == topic_choice) and 
-       (search_query.lower() in d["س"].lower() or search_query.lower() in d["ج"].lower() or search_query.lower() in f"مادة {d['مادة']}")
-]
-
-if results:
-    for item in results:
-        with st.container():
-            st.markdown(f"<div class='q-box'>مادة {item['مادة']}: {item['س']}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='a-box'><b>الرأي القانوني:</b><br>{item['ج']}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='doc-box'><b>📄 المستندات (حسب دليل الخدمات):</b><br>{item['مستندات']}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='basis-box'>⚖️ السند: {item['سند']}</div>", unsafe_allow_html=True)
-            st.write("")
-else:
-    st.info("لا توجد مادة تطابق البحث. يرجى التأكد من كتابة المصطلحات القانونية بدقة.")
-
-st.markdown("---")
-st.markdown("<p style='text-align: center; font-size: 0.8rem; color: #6b7280;'>ديوان عام منطقة البحيرة - الإدارة العامة للشئون القانونية</p>", unsafe_allow_html=True)
+# التوقيع
+st.markdown(f"""
+    <div class="signature">
+        مع تحيات وليد حماد<br>
+        الادارة العامة للشئون القانونية - ديوان عام منطقة البحيرة
+    </div>
+    """, unsafe_allow_html=True)
