@@ -1,4 +1,6 @@
 streamlit
-pandas
-python-docx
-PyMuPDF
+langchain
+langchain-community
+pypdf
+chromadb
+openai
