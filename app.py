@@ -1,35 +1,49 @@
 import streamlit as st
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.vectorstores import Chroma
-from langchain_openai import OpenAIEmbeddings
-from langchain_text_splitters import CharacterTextSplitter
+from langchain.indexes import VectorstoreIndexCreator
+import os
 
-st.title("محرك الاستخراج القانوني للتأمينات")
+# إعداد واجهة البرنامج
+st.set_page_config(page_title="محرك الاستخراج القانوني - خاص بالمدير")
+st.header("المنصة الذكية للاستعلام عن التأمينات والمعاشات")
 
-# 1. خانة تحميل المادة العلمية
-uploaded_file = st.file_uploader("ارفع ملف المادة العلمية (PDF)", type="pdf")
-
-if uploaded_file:
-    # حفظ الملف مؤقتاً لقراءته
-    with open("temp.pdf", "wb") as f:
-        f.write(uploaded_file.getvalue())
+# --- الجزء الخاص بك (لوحة تحكم المدير) ---
+with st.sidebar:
+    st.subheader("إعدادات المدير")
+    password = st.text_input("أدخل كلمة المرور لرفع مادة جديدة:", type="password")
     
-    # 2. عملية الاستخراج الذكي
-    loader = PyPDFLoader("temp.pdf")
-    documents = loader.load()
-    
-    # تقسيم النصوص لسهولة البحث
-    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-    texts = text_splitter.split_documents(documents)
-    
-    # تنبيه بنجاح تحميل المادة
-    st.success("تم تحميل المادة العلمية بنجاح. يمكنك الآن طرح استفسارك.")
+    # لنفترض أن كلمة المرور هي 123 (يمكنك تغييرها)
+    if password == "123":
+        st.success("مرحباً أستاذ وليد، يمكنك رفع المادة العلمية الآن")
+        uploaded_file = st.file_uploader("ارفع ملف المادة العلمية (PDF):", type="pdf")
+        if uploaded_file:
+            with open("current_law.pdf", "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            st.info("تم تحديث المادة العلمية بنجاح.")
+    else:
+        st.warning("هذه الخانة مخصصة لمدير النظام فقط لرفع القوانين.")
 
-    # 3. خانة السؤال
-    user_query = st.text_input("اكتب سؤالك هنا (مثلاً: نصيب الابنة المطلقة):")
+# --- الجزء الخاص بالجمهور (السؤال والاستفسار) ---
+st.write("---")
+st.subheader("اسأل عن أي شيء في قانون التأمينات")
+
+# التأكد من وجود مادة علمية مرفوعة مسبقاً
+if os.path.exists("current_law.pdf"):
+    user_query = st.text_input("اكتب سؤالك هنا (مثلاً: ما هي شروط معاش الابنة المطلقة؟):")
 
     if user_query:
-        # هنا البرنامج يبحث في المادة العلمية المرفوعة فقط
-        # ملاحظة: يتطلب هذا الجزء مفتاح API من OpenAI أو استخدام نموذج محلي
-        st.write(f"بناءً على المادة العلمية المستخرجة من الملف:")
-        # البرنامج سيقوم بالرد بـ: "نصت المادة كذا على كذا..."
+        with st.spinner("جاري الاستخراج من المادة العلمية..."):
+            try:
+                # المحرك يقرأ من الملف الذي رفعته أنت فقط
+                loader = PyPDFLoader("current_law.pdf")
+                index = VectorstoreIndexCreator().from_loaders([loader])
+                
+                # استخراج الإجابة
+                answer = index.query(user_query)
+                
+                st.markdown("### الإجابة المستخرجة وفقاً للقانون:")
+                st.success(answer)
+            except Exception as e:
+                st.error("عذراً، حدث خطأ أثناء معالجة السؤال.")
+else:
+    st.warning("البرنامج قيد التجهيز حالياً من قبل المدير، برجاء المحاولة لاحقاً.")
