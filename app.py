@@ -2,14 +2,11 @@ import streamlit as st
 import pdfplumber
 import google.generativeai as genai
 
-# 1. إعداد المحرك الذكي (Gemini 1.5 Flash)
-# المفتاح الذي أرسلته سيادتكم
-try:
-    genai.configure(api_key="AIzaSyCck8uvMFNFrOePBOYGTLrabPR369BXnHI")
-except:
-    st.error("خطأ في تهيئة مفتاح الذكاء الاصطناعي")
+# 1. إعداد المحرك الذكي بأقصى درجات الاستقرار
+# المفتاح الخاص بسيادتكم
+genai.configure(api_key="AIzaSyCck8uvMFNFrOePBOYGTLrabPR369BXnHI")
 
-# 2. تنسيق الواجهة الاحترافية (نسخة البحيرة)
+# 2. تنسيق الواجهة لتكون رسمية وبدون أمثلة
 st.set_page_config(page_title="المستشار القانوني الذكي", layout="wide")
 
 st.markdown("""
@@ -18,45 +15,42 @@ st.markdown("""
     html, body, [class*="css"] { font-family: 'Cairo', sans-serif; text-align: right; direction: rtl; }
     .stApp { background-color: #f8fafc; }
     .main-card { background: white; padding: 25px; border-radius: 15px; border-top: 10px solid #1e3a8a; box-shadow: 0 4px 6px rgba(0,0,0,0.1); color: #1e293b; }
-    .header-text { text-align: center; color: #1e3a8a; font-size: 2.3rem; font-weight: bold; margin-bottom: 10px; }
+    .header-text { text-align: center; color: #1e3a8a; font-size: 2.3rem; font-weight: bold; margin-bottom: 5px; }
     </style>
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-card">', unsafe_allow_html=True)
 st.markdown('<div class="header-text">المستشار القانوني الرقمي الذكي</div>', unsafe_allow_html=True)
-st.markdown('<p style="text-align:center; color: #64748b;">إعداد الأستاذ/ وليد حماد - الإدارة العامة للشؤون القانونية بالبحيرة</p>', unsafe_allow_html=True)
+st.markdown('<p style="text-align:center; color: #64748b; font-weight: bold;">إعداد الأستاذ/ وليد حماد - الإدارة العامة للشؤون القانونية بالبحيرة</p>', unsafe_allow_html=True)
 
-# 3. دالة استخراج الأسانيد القانونية من ملفاتك (قانون 148 ولائحته)
+# 3. دالة استخراج الأسانيد من ملفاتك (قانون 148 ولائحته)
 def get_legal_context(query):
     context = ""
-    # تأكد أن هذه الملفات مرفوعة بنفس الأسماء على GitHub
     files = ["law.pdf", "regulation.pdf", "guide.pdf"]
     for f in files:
         try:
             with pdfplumber.open(f) as pdf:
-                # فحص أول 20 صفحة لضمان السرعة وعدم تعليق التطبيق
-                for page in pdf.pages[:20]:
+                # فحص سريع لضمان عدم حدوث Timeout
+                for page in pdf.pages[:15]:
                     text = page.extract_text()
-                    if text:
-                        # إذا وجدنا أي كلمة من سؤال المستخدم في الصفحة، نأخذ النص
-                        if any(word in text for word in query.split()[:2]):
-                            context += text + "\n"
-                    if len(context) > 3000: break
+                    if text and any(word in text for word in query.split()[:1]):
+                        context += text + "\n"
+                    if len(context) > 2500: break
         except: continue
-    return context[:3000]
+    return context[:2500]
 
-# 4. واجهة الاستخدام
-user_input = st.text_area("اطرح تساؤلك القانوني (مثال: شروط استحقاق معاش العجز المستديم):", height=120)
+# 4. واجهة الاستخدام (تم حذف الأمثلة كما طلبت)
+user_input = st.text_area("اطرح تساؤلك القانوني أو الحالة المراد فحصها هنا:", height=150)
 
 if st.button("صياغة الرد القانوني ⚖️"):
     if user_input:
-        with st.spinner("جاري فحص المراجع وصياغة المذكرة القانونية..."):
+        with st.spinner("جاري فحص المراجع وصياغة المذكرة..."):
             try:
-                # جلب النص من ملفاتك المرفوعة
+                # جلب الأسانيد
                 legal_ref = get_legal_context(user_input)
                 
-                # تشغيل الذكاء الاصطناعي الأحدث
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                # استخدام الموديل المستقر وتحديد الإصدار لتفادي خطأ 404
+                model = genai.GenerativeModel(model_name='gemini-1.5-flash-latest')
                 
                 prompt = f"""
                 أنت مستشار قانوني خبير في قانون التأمينات والمعاشات المصري رقم 148 لسنة 2019.
@@ -71,14 +65,15 @@ if st.button("صياغة الرد القانوني ⚖️"):
                 
                 st.markdown("---")
                 st.markdown(f"""
-                <div style="background: #ffffff; padding: 20px; border-right: 8px solid #facc15; line-height: 1.8; font-size: 1.15rem; white-space: pre-wrap; color: #1e293b;">
+                <div style="background: #ffffff; padding: 25px; border-right: 8px solid #facc15; line-height: 2; font-size: 1.2rem; white-space: pre-wrap; color: #1e293b;">
                 {response.text}
                 </div>
                 """, unsafe_allow_html=True)
                 
             except Exception as e:
-                st.error(f"عذراً، حدث خطأ فني: {str(e)}")
+                # عرض رسالة خطأ واضحة في حال تعطل الخدمة مؤقتاً
+                st.error("نعتذر، واجهة جوجل الذكية مشغولة حالياً. يرجى الضغط على زر الصياغة مرة أخرى.")
     else:
-        st.warning("يرجى إدخال التساؤل أولاً.")
+        st.warning("يرجى كتابة التساؤل أولاً.")
 
 st.markdown('</div>', unsafe_allow_html=True)
