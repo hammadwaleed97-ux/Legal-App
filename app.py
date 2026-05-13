@@ -4,10 +4,13 @@ import google.generativeai as genai
 
 # 1. إعداد المحرك الذكي (Gemini 1.5 Flash)
 # المفتاح الذي أرسلته سيادتكم
-genai.configure(api_key="AIzaSyCck8uvMFNFrOePBOYGTLrabPR369BXnHI")
+try:
+    genai.configure(api_key="AIzaSyCck8uvMFNFrOePBOYGTLrabPR369BXnHI")
+except:
+    st.error("خطأ في تهيئة مفتاح الذكاء الاصطناعي")
 
-# 2. تنسيق الواجهة الاحترافية
-st.set_page_config(page_title="المستشار القانوني الذكي - وليد حماد", layout="wide")
+# 2. تنسيق الواجهة الاحترافية (نسخة البحيرة)
+st.set_page_config(page_title="المستشار القانوني الذكي", layout="wide")
 
 st.markdown("""
     <style>
@@ -23,40 +26,42 @@ st.markdown('<div class="main-card">', unsafe_allow_html=True)
 st.markdown('<div class="header-text">المستشار القانوني الرقمي الذكي</div>', unsafe_allow_html=True)
 st.markdown('<p style="text-align:center; color: #64748b;">إعداد الأستاذ/ وليد حماد - الإدارة العامة للشؤون القانونية بالبحيرة</p>', unsafe_allow_html=True)
 
-# 3. دالة استخراج الأسانيد القانونية من ملفاتك
+# 3. دالة استخراج الأسانيد القانونية من ملفاتك (قانون 148 ولائحته)
 def get_legal_context(query):
     context = ""
-    # الملفات المرفوعة: قانون 148 ولائحته
+    # تأكد أن هذه الملفات مرفوعة بنفس الأسماء على GitHub
     files = ["law.pdf", "regulation.pdf", "guide.pdf"]
     for f in files:
         try:
             with pdfplumber.open(f) as pdf:
-                # فحص الصفحات الأولى لسرعة الاستجابة
-                for page in pdf.pages[:25]:
+                # فحص أول 20 صفحة لضمان السرعة وعدم تعليق التطبيق
+                for page in pdf.pages[:20]:
                     text = page.extract_text()
-                    if text and any(k in text for k in query.split()[:2]):
-                        context += text + "\n"
-                    if len(context) > 5000: break
+                    if text:
+                        # إذا وجدنا أي كلمة من سؤال المستخدم في الصفحة، نأخذ النص
+                        if any(word in text for word in query.split()[:2]):
+                            context += text + "\n"
+                    if len(context) > 3000: break
         except: continue
-    return context[:5000]
+    return context[:3000]
 
 # 4. واجهة الاستخدام
-user_input = st.text_area("اطرح تساؤلك القانوني (مثال: شروط استحقاق معاش العجز المستديم):", height=150)
+user_input = st.text_area("اطرح تساؤلك القانوني (مثال: شروط استحقاق معاش العجز المستديم):", height=120)
 
 if st.button("صياغة الرد القانوني ⚖️"):
     if user_input:
         with st.spinner("جاري فحص المراجع وصياغة المذكرة القانونية..."):
             try:
-                # جلب النص من ملفاتك
+                # جلب النص من ملفاتك المرفوعة
                 legal_ref = get_legal_context(user_input)
                 
-                # تشغيل الذكاء الاصطناعي
+                # تشغيل الذكاء الاصطناعي الأحدث
                 model = genai.GenerativeModel('gemini-1.5-flash')
                 
                 prompt = f"""
                 أنت مستشار قانوني خبير في قانون التأمينات والمعاشات المصري رقم 148 لسنة 2019.
-                بناءً على هذه النصوص القانونية: {legal_ref}
-                أجب على السؤال التالي بأسلوب مذكرات قانونية رصين: {user_input}
+                بناءً على هذه المراجع: {legal_ref}
+                أجب على السؤال التالي بأسلوب مذكرات قانونية رصين ومفصل: {user_input}
                 
                 يجب أن يبدأ الرد بـ: "بالإشارة إلى التساؤل المطروح، وفي ضوء أحكام القانون رقم 148 لسنة 2019 ولائحته التنفيذية.."
                 وفي النهاية اكتب: "مع تحيات وليد حماد - الإدارة العامة للشؤون القانونية - ديوان عام منطقة البحيرة"
@@ -66,13 +71,13 @@ if st.button("صياغة الرد القانوني ⚖️"):
                 
                 st.markdown("---")
                 st.markdown(f"""
-                <div style="background: #ffffff; padding: 20px; border-right: 8px solid #facc15; line-height: 1.8; font-size: 1.15rem; white-space: pre-wrap;">
+                <div style="background: #ffffff; padding: 20px; border-right: 8px solid #facc15; line-height: 1.8; font-size: 1.15rem; white-space: pre-wrap; color: #1e293b;">
                 {response.text}
                 </div>
                 """, unsafe_allow_html=True)
                 
             except Exception as e:
-                st.error("عذراً، المحرك الذكي يحتاج لإعادة محاولة. تأكد من ثبات الإنترنت.")
+                st.error(f"عذراً، حدث خطأ فني: {str(e)}")
     else:
         st.warning("يرجى إدخال التساؤل أولاً.")
 
