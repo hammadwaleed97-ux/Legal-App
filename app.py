@@ -1,61 +1,56 @@
 import streamlit as st
 import os
+from langchain_community.document_loaders import PyPDFLoader
 
-# محاولة استيراد المكتبات مع فحص الأخطاء
-try:
-    from langchain_community.document_loaders import PyPDFLoader
-    from langchain_community.vectorstores import FAISS
-    from langchain_community.embeddings import HuggingFaceEmbeddings
-except ImportError:
-    st.error("⚠️ خطأ في التحميل: يرجى التأكد من إضافة 'sentence-transformers' و 'faiss-cpu' لملف requirements.txt")
-    st.stop()
+st.set_page_config(page_title="مستشارك القانوني", layout="wide")
 
-st.set_page_config(page_title="مستشارك في التأمينات والمعاشات", layout="wide")
+# تصميم بسيط وسريع التحميل
+st.markdown("""
+    <style>
+    .law-card { background: #ffffff; padding: 15px; border-radius: 8px; border-right: 5px solid #1e3a8a; margin-bottom: 10px; box-shadow: 1px 1px 3px rgba(0,0,0,0.1); direction: rtl; }
+    </style>
+    """, unsafe_allow_html=True)
 
 VAULT = "laws_vault"
 if not os.path.exists(VAULT): os.makedirs(VAULT)
 
-# تجهيز قاعدة البيانات في الذاكرة
-@st.cache_resource
-def build_knowledge_base():
-    files = [os.path.join(VAULT, f) for f in os.listdir(VAULT) if f.endswith('.pdf')]
-    if not files: return None
-    
-    all_docs = []
-    for f in files:
-        try:
-            loader = PyPDFLoader(f)
-            all_docs.extend(loader.load())
-        except Exception: continue
-        
-    if not all_docs: return None
-    
-    # تحميل نموذج معالجة اللغة العربية
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
-    return FAISS.from_documents(all_docs, embeddings)
-
-# --- الواجهة ---
-st.markdown("<h2 style='text-align:center;'>🏛️ منظومة الاستخراج الآلي للمواد القانونية</h2>", unsafe_allow_html=True)
-
+# --- الجانب الإداري ---
 with st.sidebar:
-    st.header("🔐 الإدارة")
+    st.header("🔑 دخول الإدارة")
     if st.text_input("الرمز:", type="password") == "123":
-        uploaded = st.file_uploader("رفع القوانين:", accept_multiple_files=True)
+        uploaded = st.file_uploader("رفع ملفات PDF:", accept_multiple_files=True)
         if uploaded:
             for f in uploaded:
                 with open(os.path.join(VAULT, f.name), "wb") as doc: doc.write(f.getvalue())
-            st.cache_resource.clear()
+            st.success("تم الحفظ")
             st.rerun()
 
-vector_db = build_knowledge_base()
+# --- الواجهة الرئيسية ---
+st.title("🏛️ منظومة البحث القانوني السريع")
 
-if vector_db:
-    query = st.text_input("ما هو سؤالك القانوني؟")
-    if st.button("بحث في القوانين") and query:
-        results = vector_db.similarity_search(query, k=3)
-        for res in results:
-            st.info(f"**من: {os.path.basename(res.metadata['source'])} (ص {res.metadata['page']+1})**\n\n{res.page_content}")
+all_laws = [f for f in os.listdir(VAULT) if f.endswith('.pdf')]
+
+if all_laws:
+    query = st.text_input("أدخل الكلمة المراد البحث عنها (مثلاً: نصيب الأرملة):")
+    
+    if query:
+        with st.spinner("جاري فحص المستندات..."):
+            found = False
+            for law_file in all_laws:
+                loader = PyPDFLoader(os.path.join(VAULT, law_file))
+                pages = loader.load()
+                for i, page in enumerate(pages):
+                    if query in page.page_content:
+                        found = True
+                        st.markdown(f"""
+                        <div class='law-card'>
+                            <b>📄 المصدر: {law_file} | صفحة: {i+1}</b><br><br>
+                            {page.page_content.replace(query, f'<span style="background:yellow">{query}</span>')}
+                        </div>
+                        """, unsafe_allow_html=True)
+            if not found:
+                st.warning("لم يتم العثور على هذه الكلمة في القوانين المرفوعة.")
 else:
-    st.warning("يرجى رفع ملفات PDF من القائمة الجانبية لتفعيل البحث.")
+    st.info("المكتبة فارغة. ارفع الملفات من القائمة الجانبية.")
 
-st.markdown("<br><hr><p style='text-align:center;'>مع تحيات وليد حماد - الإدارة العامة للشئون القانونية - ديوان عام منطقة البحيرة</p>", unsafe_allow_html=True)
+st.markdown("<br><hr><p style='text-align:center;'>مع تحيات وليد حماد - الإدارة العامة للشئون القانونية</p>", unsafe_allow_html=True)
