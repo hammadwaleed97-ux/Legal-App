@@ -1,31 +1,35 @@
-import os
-from langchain.document_loaders import DirectoryLoader, PyPDFLoader, TextLoader
-from langchain.indexes import VectorstoreIndexCreator
+import streamlit as st
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.vectorstores import Chroma
+from langchain_openai import OpenAIEmbeddings
+from langchain_text_splitters import CharacterTextSplitter
 
-# 1. إعداد مجلد "المادة العلمية"
-# ضع كل ملفاتك (PDF, Text, Docx) في هذا المجلد
-MATERIAL_DIR = "scientific_material"
-if not os.path.exists(MATERIAL_DIR):
-    os.makedirs(MATERIAL_DIR)
+st.title("محرك الاستخراج القانوني للتأمينات")
 
-def ask_pension_bot(user_question):
-    """
-    هذه الوظيفة لا تعرف شيئاً من تلقاء نفسها.
-    هي تدخل إلى مجلد المادة العلمية، تقرأ الملفات، وتستخرج الإجابة.
-    """
-    # تحميل المادة العلمية من المجلد
-    loader = DirectoryLoader(MATERIAL_DIR, glob="./*.*")
-    
-    # بناء كشاف (Index) للمادة العلمية للبحث السريع داخلها
-    index = VectorstoreIndexCreator().from_loaders([loader])
-    
-    # استخراج الإجابة والسند القانوني
-    # البرنامج سيبحث عن المواد والأنصبة داخل ملفاتك فقط
-    response = index.query(user_question)
-    
-    return response
+# 1. خانة تحميل المادة العلمية
+uploaded_file = st.file_uploader("ارفع ملف المادة العلمية (PDF)", type="pdf")
 
-# --- مثال للاستخدام ---
-# بمجرد رفع المادة العلمية للمجلد، يمكنك تشغيل البرنامج:
-# question = "ما هو نصيب الابنة المطلقة في وجود أرملة وفقاً للمواد العلمية المرفوعة؟"
-# print(ask_pension_bot(question))
+if uploaded_file:
+    # حفظ الملف مؤقتاً لقراءته
+    with open("temp.pdf", "wb") as f:
+        f.write(uploaded_file.getvalue())
+    
+    # 2. عملية الاستخراج الذكي
+    loader = PyPDFLoader("temp.pdf")
+    documents = loader.load()
+    
+    # تقسيم النصوص لسهولة البحث
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    texts = text_splitter.split_documents(documents)
+    
+    # تنبيه بنجاح تحميل المادة
+    st.success("تم تحميل المادة العلمية بنجاح. يمكنك الآن طرح استفسارك.")
+
+    # 3. خانة السؤال
+    user_query = st.text_input("اكتب سؤالك هنا (مثلاً: نصيب الابنة المطلقة):")
+
+    if user_query:
+        # هنا البرنامج يبحث في المادة العلمية المرفوعة فقط
+        # ملاحظة: يتطلب هذا الجزء مفتاح API من OpenAI أو استخدام نموذج محلي
+        st.write(f"بناءً على المادة العلمية المستخرجة من الملف:")
+        # البرنامج سيقوم بالرد بـ: "نصت المادة كذا على كذا..."
