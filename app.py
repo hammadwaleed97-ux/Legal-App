@@ -2,17 +2,14 @@ import streamlit as st
 import google.generativeai as genai
 
 # التأكد من سحب المفتاح من الأسرار بأمان
-try:
-    if "GOOGLE_API_KEY" in st.secrets:
-        genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-    else:
-        st.error("المفتاح غير موجود في الأسرار (Secrets).")
-except Exception as e:
-    st.error(f"خطأ في الوصول للأسرار: {e}")
+if "GOOGLE_API_KEY" in st.secrets:
+    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+else:
+    st.error("المفتاح غير موجود في الأسرار (Secrets).")
 
-st.set_page_config(page_title="المستشار القانوني", layout="wide")
+st.set_page_config(page_title="المستشار القانوني الذكي", layout="wide")
 
-# تصميم واجهة رصينة تليق بمكانتكم
+# تصميم واجهة تليق بسيادتكم
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo&display=swap');
@@ -22,27 +19,31 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-card">', unsafe_allow_html=True)
-st.markdown('<h2 style="text-align:center;">المستشار القانوني الرقمي الذكي</h2>', unsafe_allow_html=True)
-st.markdown('<p style="text-align:center;">إشراف الأستاذ/ وليد حماد - منطقة البحيرة</p>', unsafe_allow_html=True)
+st.markdown('<h2 style="text-align:center; color:#1e3a8a;">المستشار القانوني الرقمي الذكي</h2>', unsafe_allow_html=True)
+st.markdown('<p style="text-align:center; font-weight:bold;">إشراف الأستاذ/ وليد حماد - منطقة البحيرة</p>', unsafe_allow_html=True)
 
-# المدخلات
-user_q = st.text_input("اطرح تساؤلك القانوني هنا:")
+user_q = st.text_input("اطرح تساؤلك القانوني هنا (مثال: العجز المستديم):")
 
 if st.button("صياغة الرد القانوني ⚖️"):
     if user_q:
-        try:
-            # استخدام الموديل المستقر
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            
-            # الطلب موجه بدقة
-            response = model.generate_content(f"أجب كخبير قانوني مصري على: {user_q}")
-            
-            st.info("الرد القانوني المقترح:")
-            st.write(response.text)
-            st.success("تمت الصياغة بنجاح - مع تحيات وليد حماد")
-        except Exception as e:
-            st.error(f"حدث خطأ أثناء الصياغة: {e}")
+        with st.spinner("جاري التواصل مع المحرك الذكي..."):
+            try:
+                # التعديل الجوهري: استخدام الاسم المختصر مباشرة لحل خطأ 404
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                
+                # توجيه الموديل للصياغة القانونية الرصينة
+                prompt = f"أنت مستشار قانوني مصري خبير. صِغ رداً قانونياً مفصلاً ورسمياً على: {user_q}. ابدأ بـ 'بالإشارة إلى التساؤل المطروح..' واختم بـ 'مع تحيات وليد حماد - منطقة البحيرة'."
+                
+                response = model.generate_content(prompt)
+                
+                st.markdown("---")
+                st.success("الرد القانوني المقترح:")
+                st.write(response.text)
+                
+            except Exception as e:
+                # لو فيه أي مشكلة تقنية هتظهر هنا بوضوح
+                st.error(f"تنبيه تقني: {str(e)}")
     else:
-        st.warning("يرجى كتابة التساؤل.")
+        st.warning("يرجى كتابة التساؤل أولاً.")
 
 st.markdown('</div>', unsafe_allow_html=True)
